@@ -1,0 +1,6 @@
+﻿演示网址：https://listprice-happiness-dog-infrastructure.trycloudflare.com
+登录账号：demo / 123456
+生成时间：2026-09-16 12:44:04
+
+此网址只在本次开机期间有效。电脑关机后立即失效，
+下次启动会是一个全新的网址，重新双击 start-demo.bat 即可。

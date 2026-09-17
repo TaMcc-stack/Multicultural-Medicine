@@ -1,0 +1,817 @@
+{
+  "generated_at": "2026-09-11T13:31:18",
+  "base": "http://127.0.0.1:8000/api",
+  "with_generate": false,
+  "layers": {
+    "理解": {
+      "passed": 49,
+      "total": 51
+    },
+    "检索": {
+      "passed": 35,
+      "total": 39
+    },
+    "回答": {
+      "passed": 0,
+      "total": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "prec-bai-dm-prevalence",
+      "category": "精准检索",
+      "question": "白族糖尿病患病率是多少？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "16.0"
+          ],
+          "actual": [
+            "16.0"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.0
+    },
+    {
+      "id": "prec-dai-dm-prevalence",
+      "category": "精准检索",
+      "question": "傣族糖尿病患病率是多少？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傣族",
+          "actual": "傣族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "7.6"
+          ],
+          "actual": [
+            "7.6"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.2
+    },
+    {
+      "id": "prec-hani-dm-prevalence",
+      "category": "精准检索",
+      "question": "哈尼族糖尿病患病率是多少？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "哈尼族",
+          "actual": "哈尼族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "5.0"
+          ],
+          "actual": [
+            "5.0"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 3.9
+    },
+    {
+      "id": "prec-bai-dm-risk",
+      "category": "意图区分",
+      "question": "白族糖尿病怎么预防？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "risk",
+          "actual": "risk",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "危险因素"
+          ],
+          "actual": [
+            "危险因素"
+          ],
+          "pass": true
+        },
+        {
+          "check": "检索·证据不含无关内容",
+          "expected": "不含 ['各民族糖尿病患病率（来源']",
+          "actual": "无泄漏",
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.1
+    },
+    {
+      "id": "prec-hani-hbp-risk",
+      "category": "精准检索",
+      "question": "哈尼族高血压主要有哪些危险因素？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "哈尼族",
+          "actual": "哈尼族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "高血压",
+          "actual": "高血压",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "risk",
+          "actual": "risk",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "低教育水平"
+          ],
+          "actual": [],
+          "pass": false
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 3.9
+    },
+    {
+      "id": "prec-lisu-child-hbp",
+      "category": "精准检索",
+      "question": "傈僳族儿童青少年的高血压检出率高吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傈僳族",
+          "actual": "傈僳族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "高血压",
+          "actual": "高血压",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "6.64"
+          ],
+          "actual": [
+            "6.64"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 3.9
+    },
+    {
+      "id": "gen-lisu-obesity",
+      "category": "泛化检索",
+      "question": "傈僳族的肥胖率是多少？跟其他民族比怎么样？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傈僳族",
+          "actual": "傈僳族",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "1.9"
+          ],
+          "actual": [
+            "1.9"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 5.4
+    },
+    {
+      "id": "gen-naxi-obesity",
+      "category": "泛化检索",
+      "question": "纳西族的肥胖情况严重吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "纳西族",
+          "actual": "纳西族",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "15.4"
+          ],
+          "actual": [],
+          "pass": false
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.1
+    },
+    {
+      "id": "gen-bai-valve",
+      "category": "泛化检索",
+      "question": "白族的心脏瓣膜病严重吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "7.7"
+          ],
+          "actual": [
+            "7.7"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 2,
+      "status": "partial",
+      "elapsed": 3.6
+    },
+    {
+      "id": "gen-dai-ckm",
+      "category": "泛化检索",
+      "question": "傣族的心血管-肾脏-代谢综合征（CKM）情况如何？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傣族",
+          "actual": "傣族",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": false,
+          "pass": false
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "87.3"
+          ],
+          "actual": [
+            "87.3"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 2,
+      "status": "sufficient",
+      "elapsed": 3.8
+    },
+    {
+      "id": "gen-hani-valve",
+      "category": "泛化检索",
+      "question": "哈尼族的心脏瓣膜病患病率高吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "哈尼族",
+          "actual": "哈尼族",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "9.5"
+          ],
+          "actual": [],
+          "pass": false
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 3.5
+    },
+    {
+      "id": "gen-dai-pickle-bp",
+      "category": "泛化检索",
+      "question": "傣族爱吃腌制食品，这跟他们血压高有关系吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傣族",
+          "actual": "傣族",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": false,
+          "pass": false
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "腌制"
+          ],
+          "actual": [],
+          "pass": false
+        }
+      ],
+      "evidence_count": 2,
+      "status": "sufficient",
+      "elapsed": 3.5
+    },
+    {
+      "id": "neg-bai-dm-diet",
+      "category": "负例·无证据",
+      "question": "白族糖尿病饮食要注意什么？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "diet",
+          "actual": "diet",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        },
+        {
+          "check": "检索·意图缺失标记",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 4.4
+    },
+    {
+      "id": "neg-bai-diet-colloquial",
+      "category": "负例·无证据",
+      "question": "白族饮食习惯里，哪些容易吃出糖尿病？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "diet",
+          "actual": "diet",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        },
+        {
+          "check": "检索·意图缺失标记",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 3.7
+    },
+    {
+      "id": "neg-mongol-dm",
+      "category": "负例·无证据",
+      "question": "蒙古族糖尿病患病率是多少？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "蒙古族",
+          "actual": "蒙古族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 3.4
+    },
+    {
+      "id": "coll-bai-family-dm",
+      "category": "口语化",
+      "question": "我家是白族的，长辈有糖尿病，我是不是也得小心？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "risk",
+          "actual": "risk",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.4
+    },
+    {
+      "id": "coll-bai-dm-many",
+      "category": "口语化",
+      "question": "云南白族得糖尿病的人多吗？比别的民族严重吗？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "prevalence",
+          "actual": "prevalence",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "16.0"
+          ],
+          "actual": [
+            "16.0"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 3.7
+    },
+    {
+      "id": "cross-miao-yi-nafld",
+      "category": "跨民族对比",
+      "question": "苗族和彝族，哪个民族的脂肪肝患病率更高？",
+      "checks": [
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "20.5"
+          ],
+          "actual": [
+            "20.5"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 1,
+      "status": "partial",
+      "elapsed": 4.3
+    },
+    {
+      "id": "gen-bai-genetics",
+      "category": "泛化检索",
+      "question": "白族的遗传研究有哪些发现？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "genetics",
+          "actual": "genetics",
+          "pass": true
+        },
+        {
+          "check": "理解·泛化",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "遗传"
+          ],
+          "actual": [
+            "遗传"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 2,
+      "status": "partial",
+      "elapsed": 5.0
+    },
+    {
+      "id": "coll-dai-hbp-compare",
+      "category": "跨民族对比",
+      "question": "傣族的高血压和汉族比，谁更严重？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "傣族",
+          "actual": "傣族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "高血压",
+          "actual": "高血压",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        },
+        {
+          "check": "检索·证据含关键值",
+          "expected": [
+            "27.8"
+          ],
+          "actual": [
+            "27.8"
+          ],
+          "pass": true
+        }
+      ],
+      "evidence_count": 2,
+      "status": "sufficient",
+      "elapsed": 3.3
+    }
+  ]
+}

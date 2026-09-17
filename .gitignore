@@ -1,0 +1,40 @@
+# --- Secrets / 本地配置 ---
+.env
+ai-service/.env
+.mcp.json
+.claude/settings.local.json
+
+# --- 大文件 / 二进制 ---
+cloudflared.exe
+*.exe
+
+# --- 运行时数据 ---
+*.mv.db
+*.trace.db
+*.log
+# 评测结果日志是产物，保留
+!ai-service/eval/results/*.log
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+
+# --- Java / Maven ---
+target/
+*.class
+
+# --- Node ---
+node_modules/
+dist/
+build/
+*.local
+
+# --- IDE / 编辑器 ---
+.idea/
+.vscode/
+*.iml
+.workbuddy/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

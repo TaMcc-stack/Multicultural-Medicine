@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="基于已审核医学文献的多民族健康知识问答，每条结论都可溯源。">
+    <meta name="theme-color" content="#FBF6EF">
+    <title>多民族特色医学智能体</title>
+    <!--
+      字体说明（改这个文件前请先读）：
+      这里刻意**不加载任何 Web 字体**。
+        1. 中文字体体积大，Google Fonts 在大陆访问不稳定，加载失败会阻塞首屏；
+        2. 系统自带黑体已经足够现代——Windows 微软雅黑 / macOS·iOS 苹方 /
+           Android 思源黑体，都是干净的无衬线。
+      此前的问题是标题用了 var(--serif)，而该字体栈在 Windows 上回退到 SimSun（宋体），
+      屏幕观感显旧。修法是让 --serif 指向无衬线栈（见 assets/main.css），
+      而不是去加载一个中文字体包。
+      若将来确实需要品牌字体，请用 @fontsource/noto-sans-sc 自托管，不要引 CDN。
+    -->
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

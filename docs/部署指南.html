@@ -1,0 +1,954 @@
+<title>隧道部署手册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+  /* ── 色彩令牌：亮色为基准，暗色只重定义令牌 ───────────────── */
+  :root {
+    --ground:      #F7F3E9;
+    --surface:     #FFFDF7;
+    --surface-2:   #F0EADA;
+    --ink:         #1B2A22;
+    --ink-soft:    #5C6B61;
+    --ink-faint:   #8B978D;
+    --line:        #DCD5C0;
+    --line-strong: #C6BCA0;
+    --primary:     #2E4A3C;
+    --accent:      #B4531F;
+    --accent-soft: #F2E1D3;
+    --good:        #2F6B4F;
+    --good-soft:   #DCEBE1;
+    --bad:         #A33A2A;
+    --bad-soft:    #F5DDD7;
+    --warn:        #8A6212;
+    --warn-soft:   #F3E7CC;
+    --code-bg:     #EFE9D9;
+    --code-ink:    #2A3B31;
+    --shadow:      0 1px 2px rgba(43, 58, 48, .06), 0 8px 24px -12px rgba(43, 58, 48, .18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #101713;
+      --surface:     #18211C;
+      --surface-2:   #1F2A24;
+      --ink:         #E9E4D6;
+      --ink-soft:    #9EAA9F;
+      --ink-faint:   #77837A;
+      --line:        #2C3830;
+      --line-strong: #3D4B41;
+      --primary:     #9CC3AA;
+      --accent:      #E08A5C;
+      --accent-soft: #3A2A20;
+      --good:        #7FC29B;
+      --good-soft:   #1C3327;
+      --bad:         #E88C78;
+      --bad-soft:    #3A211C;
+      --warn:        #D9B36A;
+      --warn-soft:   #33291A;
+      --code-bg:     #1D2721;
+      --code-ink:    #CFE0D5;
+      --shadow:      0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #101713;
+    --surface:     #18211C;
+    --surface-2:   #1F2A24;
+    --ink:         #E9E4D6;
+    --ink-soft:    #9EAA9F;
+    --ink-faint:   #77837A;
+    --line:        #2C3830;
+    --line-strong: #3D4B41;
+    --primary:     #9CC3AA;
+    --accent:      #E08A5C;
+    --accent-soft: #3A2A20;
+    --good:        #7FC29B;
+    --good-soft:   #1C3327;
+    --bad:         #E88C78;
+    --bad-soft:    #3A211C;
+    --warn:        #D9B36A;
+    --warn-soft:   #33291A;
+    --code-bg:     #1D2721;
+    --code-ink:    #CFE0D5;
+    --shadow:      0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  /* ── 基础 ───────────────────────────────────────────────── */
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    padding-block: 0 6rem;
+    padding-inline: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  /* ── 页头 ───────────────────────────────────────────────── */
+  .masthead {
+    background: var(--primary);
+    color: #F4EFE2;
+    padding-block: 3.5rem 3rem;
+    margin-bottom: 3rem;
+  }
+  :root[data-theme="dark"] .masthead { color: #0E1511; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .masthead { color: #0E1511; }
+  }
+  .eyebrow {
+    margin: 0 0 .9rem;
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    opacity: .72;
+  }
+  .masthead h1 {
+    margin: 0 0 1rem;
+    font-family: 'Noto Serif SC', Georgia, 'Songti SC', serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5.5vw, 3rem);
+    line-height: 1.2;
+    letter-spacing: .01em;
+    text-wrap: balance;
+  }
+  .standfirst {
+    margin: 0;
+    max-width: 42em;
+    font-size: 1.02rem;
+    line-height: 1.85;
+    opacity: .88;
+  }
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .75rem;
+    margin-top: 1.9rem;
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .74rem;
+  }
+  .masthead-meta span {
+    border: 1px solid rgba(244, 239, 226, .34);
+    border-radius: 999px;
+    padding: .1rem .7rem;
+  }
+  :root[data-theme="dark"] .masthead-meta span { border-color: rgba(14, 21, 17, .3); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .masthead-meta span { border-color: rgba(14, 21, 17, .3); }
+  }
+
+  /* ── 版面：左导航 + 正文 ────────────────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (min-width: 1000px) {
+    .layout { grid-template-columns: 168px 1fr; gap: 3.5rem; }
+  }
+  .rail { display: none; }
+  @media (min-width: 1000px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: 2rem;
+      font-size: .86rem;
+    }
+    .rail-title {
+      font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin: 0 0 .7rem;
+    }
+    .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .1rem; }
+    .rail a {
+      display: block;
+      padding: .3rem .6rem;
+      border-left: 2px solid var(--line);
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .rail a:hover, .rail a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+    .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  }
+
+  section { margin-bottom: 4.5rem; scroll-margin-top: 1.5rem; }
+  h2 {
+    margin: 0 0 1.4rem;
+    font-family: 'Noto Serif SC', Georgia, 'Songti SC', serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    line-height: 1.35;
+    letter-spacing: .01em;
+    display: flex;
+    align-items: baseline;
+    gap: .7rem;
+    text-wrap: balance;
+  }
+  h2 .num {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .08em;
+    flex: none;
+  }
+  h3 {
+    margin: 0 0 .6rem;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  p { margin: 0 0 1rem; max-width: 68ch; }
+  .lede { color: var(--ink-soft); max-width: 62ch; }
+
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .86em;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: .12em .4em;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+  kbd {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .84em;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: .1em .38em;
+    color: var(--ink);
+  }
+  pre {
+    margin: 0 0 1rem;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: .95rem 1.1rem;
+    overflow-x: auto;
+    font-size: .84rem;
+    line-height: 1.7;
+  }
+  pre code { background: none; padding: 0; font-size: 1em; color: inherit; }
+  pre .c { color: var(--ink-faint); }
+
+  /* ── 拓扑图 ─────────────────────────────────────────────── */
+  .topo {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.6rem 1.2rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 1.2rem;
+  }
+  .node {
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    padding: .55rem 1.05rem;
+    text-align: center;
+    min-width: 190px;
+  }
+  .node-label {
+    display: block;
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-weight: 600;
+    font-size: .86rem;
+    color: var(--primary);
+  }
+  .node-meta { display: block; font-size: .76rem; color: var(--ink-faint); line-height: 1.5; }
+  .node-accent { border-color: var(--accent); border-width: 2px; }
+  .node-accent .node-label { color: var(--accent); }
+  .topo-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    padding-block: .1rem;
+  }
+  .topo-link::before {
+    content: "";
+    width: 2px;
+    height: 18px;
+    background: var(--line-strong);
+  }
+  .topo-link::after {
+    content: "";
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--line-strong);
+  }
+  .topo-link span { padding-block: .15rem; }
+  .topo-fork {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .8rem;
+  }
+  .topo-fork .node { min-width: 150px; }
+
+  /* ── 表格 ───────────────────────────────────────────────── */
+  .table-scroll { overflow-x: auto; margin-bottom: 1.2rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: .88rem;
+  }
+  caption {
+    caption-side: bottom;
+    text-align: left;
+    font-size: .78rem;
+    color: var(--ink-faint);
+    padding-top: .6rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .62rem .8rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+  }
+  td:first-child { white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; font-size: .92em; }
+
+  /* ── 步骤 ───────────────────────────────────────────────── */
+  .step {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .2rem 1.4rem;
+  }
+  .step:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  @media (min-width: 720px) {
+    .step { grid-template-columns: 2.4rem 1fr; }
+    .step > .step-body { grid-column: 2; }
+    .step > .step-mark { grid-row: 1 / span 20; }
+  }
+  .step-mark {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+  .step-body > p:last-child { margin-bottom: .8rem; }
+
+  /* ── 提示块 ─────────────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--line-strong);
+    background: var(--surface);
+    padding: .8rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1rem;
+    font-size: .9rem;
+  }
+  .note p { margin: 0; max-width: none; }
+  .note p + p { margin-top: .5rem; }
+  .note-key { border-left-color: var(--accent); background: var(--accent-soft); }
+  .note-key strong { color: var(--accent); }
+  .note strong { font-weight: 700; }
+
+  /* ── 坑位卡 ─────────────────────────────────────────────── */
+  .pit {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+    margin-bottom: .85rem;
+    box-shadow: var(--shadow);
+  }
+  .pit-head {
+    display: flex;
+    align-items: baseline;
+    gap: .7rem;
+    margin-bottom: .7rem;
+    flex-wrap: wrap;
+  }
+  .pit-idx {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--ink-faint);
+    letter-spacing: .08em;
+    flex: none;
+  }
+  .pit-head h3 { margin: 0; }
+  .pit-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .3rem .9rem;
+    font-size: .88rem;
+    margin: 0;
+  }
+  .pit-grid dt {
+    font-weight: 700;
+    color: var(--ink-faint);
+    font-size: .8rem;
+    white-space: nowrap;
+    padding-top: .1rem;
+  }
+  .pit-grid dd { margin: 0; }
+  .pit-grid dd p { margin: 0 0 .4rem; max-width: none; }
+  .pit-grid dd p:last-child { margin-bottom: 0; }
+
+  /* ── 药丸标签 ───────────────────────────────────────────── */
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .08rem .55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill-good { background: var(--good-soft); color: var(--good); }
+  .pill-bad  { background: var(--bad-soft);  color: var(--bad); }
+  .pill-warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* ── 清单 ───────────────────────────────────────────────── */
+  .checklist {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .checklist li { border-bottom: 1px solid var(--line); }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist label {
+    display: flex;
+    gap: .85rem;
+    align-items: flex-start;
+    padding: .8rem 1.1rem;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .checklist label:hover { background: var(--surface-2); }
+  .checklist input {
+    flex: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: .32rem 0 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .checklist input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ck-text { font-size: .93rem; line-height: 1.6; }
+  .ck-hint { display: block; color: var(--ink-faint); font-size: .8rem; }
+  .checklist input:checked ~ .ck-text { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+  .ck-progress {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: .8rem;
+    color: var(--ink-soft);
+    margin: 0 0 1.6rem;
+  }
+  .ck-progress b { color: var(--accent); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 3rem;
+    padding-top: 1.4rem;
+    font-size: .82rem;
+    color: var(--ink-faint);
+  }
+  footer p { margin: 0 0 .3rem; max-width: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">多民族特色医学智能体 · 演示部署</p>
+    <h1>隧道部署手册</h1>
+    <p class="standfirst">
+      三个跑在自己电脑上的服务——前端 5173、后端 8080、AI 8000——用一个免费隧道发布到公网，
+      让别人用手机就能打开。下面是完整六步，以及我们实际踩过的八个坑。
+    </p>
+    <div class="masthead-meta">
+      <span>cloudflared quick tunnel</span>
+      <span>零成本 · 免账号</span>
+      <span>网址每次重启都会变</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="layout">
+
+  <nav class="rail" aria-label="目录">
+    <p class="rail-title">目录</p>
+    <ol>
+      <li><a href="#arch">整体架构</a></li>
+      <li><a href="#steps">部署六步</a></li>
+      <li><a href="#pits">八个坑</a></li>
+      <li><a href="#day">演讲当天</a></li>
+      <li><a href="#quick">故障速查</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <!-- ══ 架构 ══ -->
+  <section id="arch">
+    <h2><span class="num">01</span>整体架构</h2>
+    <p class="lede">
+      核心思路：<strong>只把 5173 这一个端口暴露出去</strong>。前端 Vite 自己当网关，
+      按 <code>/api</code> 前缀把请求分给后端和 AI。这样隧道只需要一条，
+      后端和 AI 完全不碰公网。
+    </p>
+
+    <div class="topo">
+      <div class="node">
+        <span class="node-label">浏览器</span>
+        <span class="node-meta">评委 / 同学的手机或电脑</span>
+      </div>
+      <div class="topo-link"><span>https://xxxx.trycloudflare.com</span></div>
+      <div class="node node-accent">
+        <span class="node-label">Cloudflare 隧道</span>
+        <span class="node-meta">cloudflared.exe · 唯一的公网入口</span>
+      </div>
+      <div class="topo-link"><span>localhost:5173</span></div>
+      <div class="node">
+        <span class="node-label">前端 :5173</span>
+        <span class="node-meta">Vite · 发页面 + 当网关</span>
+      </div>
+      <div class="topo-link"><span>按 /api 前缀分流</span></div>
+      <div class="topo-fork">
+        <div class="node">
+          <span class="node-label">后端 :8080</span>
+          <span class="node-meta">Spring Boot</span>
+        </div>
+        <div class="node">
+          <span class="node-label">AI :8000</span>
+          <span class="node-meta">Python FastAPI</span>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      分流规则写在 <code>frontend/vite.config.ts</code> 的 <code>proxy</code> 里。规则<strong>按数组顺序匹配</strong>，
+      所以具体前缀必须排在 <code>/api</code> 兜底之前：
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>请求前缀 → 实际服务。顺序即优先级，写反了就会走错服务。</caption>
+        <thead>
+          <tr><th>请求前缀</th><th>转发到</th><th>管什么</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">/api/auth</td><td class="mono">:8080</td><td>登录、注册、个人资料</td></tr>
+          <tr><td class="mono">/api/conversations</td><td class="mono">:8080</td><td>会话管理</td></tr>
+          <tr><td class="mono">/api/qa</td><td class="mono">:8080</td><td>问答编排</td></tr>
+          <tr><td class="mono">/api/kb</td><td class="mono">:8080</td><td>知识库业务</td></tr>
+          <tr><td class="mono">/api/dynamics</td><td class="mono">:8080</td><td>动态</td></tr>
+          <tr><td class="mono">/api/favorites</td><td class="mono">:8080</td><td>收藏</td></tr>
+          <tr><td class="mono">/api/search-history</td><td class="mono">:8080</td><td>高级检索历史</td></tr>
+          <tr><td class="mono">/api/gaps</td><td class="mono">:8080</td><td>知识缺口 / 需求分析</td></tr>
+          <tr><td class="mono">/api/feedback</td><td class="mono">:8080</td><td>反馈留言板</td></tr>
+          <tr><td class="mono">/api/health</td><td class="mono">:8080</td><td>后端健康检查</td></tr>
+          <tr><td class="mono">/api</td><td class="mono">:8000</td><td><strong>兜底</strong>：检索、生成、理解等 AI 接口</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><strong>为什么不让隧道暴露三个端口？</strong>免费版 quick tunnel 一次只给一个随机域名。想暴露三个，就得开三条隧道、拿三个网址——前端还得知道另外两个在哪，跨域问题也随之而来。让 Vite 当网关，一条隧道、一个网址、同源，全都省了。</p>
+    </div>
+  </section>
+
+  <!-- ══ 六步 ══ -->
+  <section id="steps">
+    <h2><span class="num">02</span>部署六步</h2>
+    <p class="lede">前三步是本地准备，第四步改配置，第五步开隧道，第六步验证。全程不需要买服务器。</p>
+
+    <div class="note note-key">
+      <p><strong>懒人版：双击 <code>Start\start-demo.bat</code> 就行。</strong>它把下面六步全做完了——起服务、打包、起前端、开隧道、抓网址、自动验证——还会把网址复制到剪贴板、存档到 <code>Start\当前演示网址.txt</code>。</p>
+      <p>下面六步是对应的人工流程，看懂它才能在有一步出错时知道该查哪里。</p>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">01</div>
+      <div class="step-body">
+        <h3>起三个服务</h3>
+        <p>三个服务各开一个窗口，顺序无所谓，但要都起来：</p>
+        <pre><code>ai-service\restart-ai.bat        <span class="c"># → :8000</span>
+backend\restart-backend.bat      <span class="c"># → :8080</span>
+frontend\restart-frontend.bat    <span class="c"># → :5173</span></code></pre>
+        <p>嫌麻烦就用一键脚本 <code>Start\start-all.bat</code>，它会开三个窗口分别拉起。</p>
+        <div class="note">
+          <p><strong>AI 服务必须用 <code>restart-ai.bat</code> 里写死的解释器</strong>（Python 3.12）。项目里的 <code>.venv</code> 是坏的，直接调会报「did not find executable」。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">02</div>
+      <div class="step-body">
+        <h3>打包前端 —— 这一步决定快慢</h3>
+        <pre><code>cd frontend
+npm run build-only      <span class="c"># 只打包；npm run build 会多跑一遍 vue-tsc 类型检查</span></code></pre>
+        <p>产物落在 <code>frontend/dist/</code>。</p>
+        <div class="note note-key">
+          <p><strong>为什么必须打包？</strong>开发模式（<code>npm run dev</code>）下，浏览器要分几百次去要一个个小模块文件。走隧道时每个请求都要跑一趟「你 → 美国节点 → 回来」，几百次往返叠加起来，第一次打开能等几十秒。打包之后几百个请求合并成三个文件（HTML + JS + CSS），从几十秒降到几秒。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">03</div>
+      <div class="step-body">
+        <h3>改 vite.config.ts 的三处</h3>
+        <p>这是唯一需要动代码的地方，三处缺一不可：</p>
+        <pre><code><span class="c">// ① 白名单：Vite 默认只放行 localhost，隧道域名会被它 403 拦掉</span>
+const allowedHosts = ['.trycloudflare.com']
+
+<span class="c">// ② 代理：每条规则都摘掉 Origin 头（原因见坑 2）</span>
+function apiProxy(target) {
+  return {
+    target,
+    changeOrigin: true,
+    configure(proxy) {
+      proxy.on('proxyReq', (req) =&gt; req.removeHeader('origin'))
+    },
+  }
+}
+
+export default defineConfig({
+  server:  { host: true, port: 5173, allowedHosts, proxy },
+  <span class="c">// ③ preview 块：让打包产物也能被访问、也能代理</span>
+  preview: { host: true, port: 5173, appType: 'spa', allowedHosts, proxy },
+})</code></pre>
+        <div class="note">
+          <p><code>preview</code> 块要和 <code>server</code> 段<strong>完全一致</strong>（端口、白名单、代理）。只配了 <code>server</code> 的话，<code>npm run preview</code> 起来后代理和白名单都是空的，页面照样打不开。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">04</div>
+      <div class="step-body">
+        <h3>用 preview 起前端</h3>
+        <pre><code>npm run preview      <span class="c"># 还是 5173，但发的是打包产物</span></code></pre>
+        <p>要先把原来的 dev 进程关掉，否则端口冲突。</p>
+        <div class="note">
+          <p>隧道指向的是<strong>端口</strong>而不是某个进程，所以换进程不会改变网址——这也是为什么可以先开隧道、再从容地重起前端。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">05</div>
+      <div class="step-body">
+        <h3>起隧道</h3>
+        <p>先下载 <code>cloudflared.exe</code>（单文件、免安装，放进项目根目录），然后：</p>
+        <pre><code>cloudflared.exe tunnel --url http://localhost:5173</code></pre>
+        <p>输出里会有一行框起来的网址，抄下来就是公网入口：</p>
+        <pre><code>INF |  https://xxxx-xxxx-xxxx-xxxx.trycloudflare.com  |</code></pre>
+        <div class="note note-key">
+          <p><strong>这个网址每次重启都会变。</strong>免费的 quick tunnel 不给固定域名，这是它的固有特性，不是配置问题。所以演示当天不要中途重启隧道。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-mark">06</div>
+      <div class="step-body">
+        <h3>验证四件事</h3>
+        <p>把网址填进去，四条全过才算通：</p>
+        <pre><code>$base = "https://你的隧道网址"
+
+<span class="c"># ① 首页</span>
+Invoke-WebRequest "$base/" -UseBasicParsing | Select-Object StatusCode
+
+<span class="c"># ② 后端</span>
+Invoke-WebRequest "$base/api/health" -UseBasicParsing | Select-Object -Expand Content
+
+<span class="c"># ③ AI</span>
+Invoke-WebRequest "$base/api/ai/health" -UseBasicParsing | Select-Object -Expand Content
+
+<span class="c"># ④ 登录 —— 必须带 Origin 头，否则测不出 CORS 问题（见坑 2）</span>
+$bytes = [System.Text.Encoding]::UTF8.GetBytes('{"username":"demo","password":"123456"}')
+Invoke-WebRequest "$base/api/auth/login" -Method POST `
+  -ContentType "application/json; charset=utf-8" -Body $bytes `
+  -Headers @{ Origin = $base } -UseBasicParsing | Select-Object StatusCode</code></pre>
+        <div class="note note-key">
+          <p><strong>测 POST 接口务必带 <code>Origin</code> 头。</strong>浏览器对 POST 一定会发这个头，而命令行默认不发——不带 <code>Origin</code> 测出来是 200，浏览器里却是 403。我们就是在这里绕了一大圈。</p>
+          <p>另外，中文请求体要用 <code>[System.Text.Encoding]::UTF8.GetBytes()</code> 转成字节再发。PowerShell 5.1 直接传字符串会按 Latin-1 编码，中文变乱码，接口会返回一堆 <code>null</code>，看着像服务坏了。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 六个坑 ══ -->
+  <section id="pits">
+    <h2><span class="num">03</span>八个坑</h2>
+    <p class="lede">
+      下面每一条都实际发生过。共同点是<strong>报错信息都不说人话</strong>——
+      所以记「症状」比记「原因」更有用。
+    </p>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 1</span><h3>Vite 拦 Host，整页 403</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>打开网址是一片白，页面写着 <code>Blocked request. This host is not allowed.</code></dd>
+        <dt>根因</dt><dd>Vite 有个安全机制：只放行 <code>localhost</code> 的 Host 头。隧道的 Host 是 <code>xxxx.trycloudflare.com</code>，被它当成攻击挡掉了。</dd>
+        <dt>修法</dt><dd><code>server.allowedHosts: ['.trycloudflare.com']</code>。前面那个点表示匹配任意子域名，这样换网址也不用改。</dd>
+      </dl>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 2</span><h3>CORS 拦 Origin —— 最阴的一个</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>页面一切正常，首页能开、健康检查也通，但<strong>一点登录就弹「网络异常，请稍后重试」</strong>。发消息、注册同样挂。</dd>
+        <dt>根因</dt><dd>浏览器对<strong>非 GET 请求一定会带 <code>Origin</code> 头，即使是同源请求</strong>（这是浏览器规范，很多人不知道）。后端的跨域白名单只写了 <code>http://localhost:*</code>，隧道域名不在里面，Spring 直接回 <code>403 Invalid CORS request</code>。响应体是纯文本，前端解析不出内容，只好显示兜底文案——所以提示文不对题。</dd>
+        <dt>修法</dt><dd>在 Vite 代理转发时把 <code>Origin</code> 摘掉。经代理转发后，后端看到的本来就是同源请求，摘掉完全合理；而且隧道网址每次都会变，摘头不依赖具体域名，比往白名单加域名一劳永逸。</dd>
+      </dl>
+      <div class="note" style="margin:.8rem 0 0">
+        <p><strong>「GET 全好、POST 全挂」就是这条的特征</strong>，不是「没连上后端」。另外，Python/FastAPI 那边没有这个问题——它的跨域中间件遇到不认识的 Origin 只是不加响应头，不会拒绝请求。所以这个坑只在 Spring 那条链路上。</p>
+      </div>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 3</span><h3>开发模式慢到像卡死</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>第一次打开要等几十秒，转圈转到以为挂了。</dd>
+        <dt>根因</dt><dd><code>npm run dev</code> 不给打包产物，浏览器要分几百次去要一个个模块。每个请求都要走一趟「中国 → 美国节点 → 回来」，几百次叠加。</dd>
+        <dt>修法</dt><dd><code>npm run build-only</code> 打包，然后用 <code>npm run preview</code> 起服务。</dd>
+      </dl>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 4</span><h3>代理前缀顺序写反</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>界面弹一个 <code>Not Found</code>。后端日志里什么都没有。</dd>
+        <dt>根因</dt><dd>新加的接口前缀没排在 <code>/api</code> 兜底之前，请求被转发给了 Python，拿到 FastAPI 的 <code>{"detail":"Not Found"}</code>。</dd>
+        <dt>修法</dt><dd>把具体前缀写在 <code>/api</code> 兜底<strong>之前</strong>。代理规则是按顺序匹配的，顺序就是优先级。</dd>
+      </dl>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 5</span><h3>HTTP/2 协议注册不上</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>隧道起不来，日志报 <code>Register tunnel error ... context deadline exceeded</code>，进程退出。</dd>
+        <dt>根因</dt><dd>换用 <code>--protocol http2</code> 后，这条网络下注册握手超时。前置检查全 PASS，但实际连不上。</dd>
+        <dt>修法</dt><dd>用默认的 QUIC 就好（<code>--protocol quic</code> 或干脆不加参数）。QUIC 虽然偶尔报 <code>wsasendto 缓冲区不足</code>，但会自动重连，不影响使用。</dd>
+      </dl>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 6</span><h3>换网络 = 隧道当场断</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>用着好好的，忽然报网络错误。</dd>
+        <dt>根因</dt><dd>电脑换了网络（比如从 WiFi 切到手机热点），切换的一瞬间所有连接被掐断，隧道跟着断。</dd>
+        <dt>修法</dt><dd>刷新页面即可恢复。演示当天<strong>千万别切网络</strong>——别从 WiFi 切热点，也别让笔记本在 WiFi 之间漫游。</dd>
+      </dl>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 7</span><h3>新建的隧道没有 DNS 记录（被限流）</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>脚本显示隧道建好了、也拿到了网址，但<strong>四项验证全挂</strong>，域名根本解析不出来。隧道日志里却明明白白写着 <code>Registered tunnel connection</code>。</dd>
+        <dt>根因</dt><dd>Cloudflare 对免费 quick tunnel 有<strong>创建频率限制</strong>。短时间内反复重建隧道（调试时最容易犯——每次改点东西就重启一遍），新域名就拿不到 DNS 记录。用 DoH 查会看到记录可能已存在，但本地解析不到。</dd>
+        <dt>修法</dt><dd><strong>等 30～60 分钟</strong>（或重启电脑），再建一条。期间不要反复重启隧道——每重启一次都会加重限流。<br>本机服务不受影响，可以先在浏览器里用 <code>http://localhost:5173</code> 演示。</dd>
+      </dl>
+      <div class="note" style="margin:.8rem 0 0">
+        <p><strong>一条经验：</strong>调试阶段尽量复用同一条隧道，别每次改动都重启它。隧道的 DNS 一旦生效就不会再变，改前端代码只要重启 5173 上的进程就行（隧道指向的是端口，不是进程）。</p>
+      </div>
+    </div>
+
+    <div class="pit">
+      <div class="pit-head"><span class="pit-idx">坑 8</span><h3>本机 DNS 不给 IPv4，网址打不开</h3></div>
+      <dl class="pit-grid">
+        <dt>症状</dt><dd>隧道建好了、日志里 <code>Registered tunnel connection</code> 也在，但浏览器打开网址就是转圈然后失败。<strong>只有你这台电脑这样</strong>，别人的手机正常。</dd>
+        <dt>根因</dt><dd>这条网络的 DNS 服务器对 <code>*.trycloudflare.com</code> 的 <b>IPv4（A 记录）查询直接回 NXDOMAIN</b>，只肯给 IPv6（AAAA）；而这条网络的 IPv6 又出不了网。两头堵死。实测：<code>nslookup -type=A</code> 回「Non-existent domain」，但公共 DNS 全都查得到。</dd>
+        <dt>修法</dt><dd>把网卡的 DNS 换成公共 DNS（管理员 PowerShell）：<br><code>Set-DnsClientServerAddress -InterfaceAlias WLAN -ServerAddresses 223.5.5.5, 119.29.29.29</code><br><code>Clear-DnsClientCache</code><br>想改回去：<code>Set-DnsClientServerAddress -InterfaceAlias WLAN -ResetServerAddresses</code></dd>
+      </dl>
+      <div class="note" style="margin:.8rem 0 0">
+        <p><strong>别用「禁用 IPv6」来修</strong>：A 记录本来就是 NXDOMAIN，禁了 IPv6 就一个地址都拿不到，反而更糟。</p>
+        <p><code>start-demo.bat</code> 每次会自检这一点，并直接打出上面那条命令——看到提示照抄即可。它还会用 <code>--resolve</code> 绕过坏 DNS 去验证隧道，所以「验证通过但浏览器打不开」时，问题一定在这台机器的解析上。</p>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:1.2rem">
+      <p><strong>还有一条不算坑但要知道：</strong>免费隧道没有可用性保证，Cloudflare 官方明确说了不承诺 uptime。演示当天它可能自己抖一下——刷新页面能救回来。真要稳定得上付费的固定域名隧道，但演示场景没必要。</p>
+    </div>
+  </section>
+
+  <!-- ══ 演讲当天 ══ -->
+  <section id="day">
+    <h2><span class="num">04</span>演讲当天</h2>
+    <p class="lede">开始讲之前照着勾一遍。勾选状态会存在你自己的浏览器里，换台设备要重新勾。</p>
+
+    <p class="ck-progress" id="ckProgress"></p>
+
+    <ul class="checklist" id="checklist">
+      <li><label><input type="checkbox" data-ck="1"><span class="ck-text">四个服务都在跑<span class="ck-hint">前端 5173 · 后端 8080 · AI 8000 · cloudflared 隧道</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="2"><span class="ck-text">隧道网址能打开，首页正常<span class="ck-hint">用手机也试一次，别只在自己电脑上试</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="3"><span class="ck-text">用 demo / 123456 能登录进去<span class="ck-hint">这条最容易出问题——它走的是 POST，过不了就是坑 2</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="4"><span class="ck-text">问一个知识库里的问题，能出答案和依据<span class="ck-hint">例：白族糖尿病患病率高吗？</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="5"><span class="ck-text">回答底部的「您可能还想问」出现 3 条追问</span></label></li>
+      <li><label><input type="checkbox" data-ck="6"><span class="ck-text">电脑电源设成「永不睡眠」<span class="ck-hint">睡了服务就停，网址直接失效</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="7"><span class="ck-text">提前完整走一遍流程，让浏览器缓存住资源<span class="ck-hint">第一次加载要下约 1.4MB，之后明显快</span></span></label></li>
+      <li><label><input type="checkbox" data-ck="8"><span class="ck-text">全程不切网络、不合盖、不重启任何服务</span></label></li>
+    </ul>
+
+    <div class="note note-key">
+      <p><strong>现场如果卡住了：先 <kbd>Ctrl</kbd>+<kbd>F5</kbd> 刷新。</strong>八成是网络抖了一下，刷新就好。别急着重启服务——重启隧道意味着网址会变，正在看的人全断。</p>
+    </div>
+  </section>
+
+  <!-- ══ 速查 ══ -->
+  <section id="quick">
+    <h2><span class="num">05</span>故障速查</h2>
+    <p class="lede">从「你看到什么」倒查，比从原因正查快得多。</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>症状 → 大概率原因 → 第一个动作</caption>
+        <thead>
+          <tr><th>你看到的</th><th>大概率是</th><th>先做什么</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pill pill-bad">整页 403</span> Blocked request</td>
+            <td>Vite 拦 Host</td>
+            <td>检查 <code>allowedHosts</code> 有没有配；配了还不行就看看是不是配在了 <code>server</code> 而 <code>preview</code> 没配</td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-bad">弹窗</span> 网络异常，请稍后重试</td>
+            <td>Spring 拦 Origin（坑 2），或隧道刚断过</td>
+            <td>先刷新重试；还挂就查代理有没有摘 <code>Origin</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-bad">弹窗</span> Not Found</td>
+            <td>代理前缀顺序（坑 4）</td>
+            <td>把新前缀挪到 <code>/api</code> 兜底之前</td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-bad">整页 502 / 530</span></td>
+            <td>隧道断了，或前端没起</td>
+            <td>看 5173 在不在、<code>cloudflared</code> 进程还在不在</td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-bad">域名</span> 解析不出来</td>
+            <td>两种可能：被限流（坑 7），或本机 DNS 不给 IPv4（坑 8）</td>
+            <td>看 <code>start-demo.bat</code> 的提示——它已经帮你区分了：说「公网记录是有的」就是坑 8，改 DNS 即可</td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-warn">第一次</span> 加载几十秒</td>
+            <td>跑的还是 dev 模式（坑 3）</td>
+            <td>确认用的是 <code>npm run preview</code>，不是 <code>npm run dev</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-warn">用着用着</span> 忽然全挂</td>
+            <td>换网络了（坑 6）</td>
+            <td>刷新；确认电脑网络没变过</td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-warn">每个操作</span> 都等 2～5 秒</td>
+            <td>正常现象</td>
+            <td>流量绕道海外节点，属预期。别当成卡死</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>多民族特色医学智能体 · 演示部署参考</p>
+    <p>免费 quick tunnel 无可用性保证，仅适用于演示与试用。</p>
+  </footer>
+
+  </main>
+</div>
+</div>
+
+<script>
+  // 演讲前清单：勾选状态存在本机浏览器里（localStorage）。
+  // 存储可能不可用（隐私模式 / 禁用站点数据），所以全部包在 try 里，
+  // 失败时页面照常渲染、只是不记忆——不影响阅读和使用。
+  (function () {
+    var KEY = 'tunnel-deploy-checklist-v1'
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('#checklist input[data-ck]'))
+    var progress = document.getElementById('ckProgress')
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY)
+        return raw ? JSON.parse(raw) : {}
+      } catch (e) {
+        return {}
+      }
+    }
+
+    function save(state) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state))
+      } catch (e) {
+        /* 存不了就算了，页面仍然可用 */
+      }
+    }
+
+    function render() {
+      var done = boxes.filter(function (b) { return b.checked }).length
+      progress.innerHTML = '已完成 <b>' + done + '</b> / ' + boxes.length
+        + (done === boxes.length ? '　—　可以开讲了' : '')
+    }
+
+    var state = load()
+    boxes.forEach(function (box) {
+      if (state[box.dataset.ck]) box.checked = true
+      box.addEventListener('change', function () {
+        var next = load()
+        if (box.checked) next[box.dataset.ck] = 1
+        else delete next[box.dataset.ck]
+        save(next)
+        render()
+      })
+    })
+    render()
+  })()
+</script>

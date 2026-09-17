@@ -1,0 +1,7 @@
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27
+pydantic>=2.6
+# 网页正文提取（「从链接导入」用）：专门做 reader-mode 正文抽取，
+# 自带去导航/广告/页脚/评论，比 BeautifulSoup + 自写启发式可靠得多。
+trafilatura>=2.0

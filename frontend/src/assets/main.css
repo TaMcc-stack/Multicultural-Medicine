@@ -1,0 +1,337 @@
+/* ============================================================
+   设计系统 —— 暖纸底色 · 陶土红主色 · 鼠尾草绿辅色
+   ------------------------------------------------------------
+   设计取向：偏「知识社区」（Notion / 知乎）而非「医疗软件」。
+   骨架保留了项目原有的暖色识别度，这一版主要补的是**纪律**：
+     · 字体真正加载（此前只有声明、没有加载，标题实际渲染成宋体）
+     · 补齐所有被引用但缺失的 token（如 --line-2）
+     · 增加间距 / 字阶 token，此前 padding、font-size 全是手写
+     · 阴影改为「扩散大、透明度低」，看起来是离开纸面而非贴张灰纸
+
+   参考：shadcn-vue 的 token 纪律（语义成对、border 分层、圆角克制），
+        而非南生论坛的视觉（AntD 默认蓝 #1890ff + 2px 圆角 = 后台管理系统味）。
+   ============================================================ */
+:root {
+  /* ---------- 颜色：底色与文字 ---------- */
+  --bg:        #FBF6EF;   /* 暖纸底 */
+  --bg-deep:   #F3EADD;   /* 次级底色（表头、代码块） */
+  --surface:   #FFFFFF;   /* 卡片面 */
+  --ink:       #2B241D;   /* 主文字（暖黑，非纯黑） */
+  --ink-2:     #5C5348;   /* 次要文字 */
+  --ink-3:     #8A7F70;   /* 辅助文字（时间戳、计数） */
+
+  /* ---------- 颜色：品牌 ---------- */
+  --clay:      #B85A36;   /* 主色 · 陶土红 */
+  --clay-deep: #9A4628;
+  --clay-soft: #F4E2D6;
+  --sage:      #3F6A58;   /* 辅色 · 鼠尾草绿 */
+  --sage-deep: #305344;
+  --sage-soft: #E4ECE2;
+  --amber:     #B77E2A;   /* 提醒（泛化检索、假设性结论） */
+  --amber-soft:#F5E9CF;
+  --danger:    #B2473A;   /* 危险 / 错误 */
+  --danger-deep:#95382D;
+  --danger-soft:#F5E1DC;
+
+  /* ---------- 颜色：描边 ---------- */
+  --line:      #E9DFD1;   /* 常规描边、卡片边框、分隔线 */
+  --line-2:    #F0E8DC;   /* 更弱的分隔（表格行、列表项之间） */
+  --line-strong: #D4C4B0; /* hover / 激活态的描边，必须比 --line 深一档才看得出变化 */
+  /* 语义色的配套描边：与 *-soft 背景成对使用（如 sage-soft 底 + sage-line 边）。
+     此前这些值散落在各视图里硬编码，同一个绿色描边写出过 #cfe0d5 / #c9d8cf 两个版本。 */
+  --sage-line:   #CFE0D5;
+  --amber-line:  #E9D9B4;
+  --danger-line: #E9C8BB;
+  --accent-line: #C8A97E;  /* 依据文献引用块的装饰性描边（暖金） */
+
+  /* 「未就绪」按钮（如发送键在问题通过验证前）——暖灰，与主色的暖调同一族 */
+  --muted-btn:       #C4B5A0;
+  --muted-btn-hover: #B0A08A;
+
+  /* ---------- 字体 ----------
+     标题不再用衬线：宋体在屏幕上天然显旧，是此前「像学术报告」的主因，
+     而且项目里从未真正加载过 Noto Serif SC，回退到 SimSun 就是这个结果。
+     --serif 作为兼容名保留（历史样式大量使用），现指向无衬线显示字体。 */
+  --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+               system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  --sans:  var(--font-sans);
+  --serif: var(--font-sans);
+
+  /* ---------- 字阶 ----------
+     此前全项目有 23 种不同的 font-size。收敛到 8 档，见 assets/main.css 顶部说明。 */
+  --fs-xs:   11px;   /* 时间戳、计数 */
+  --fs-sm:   12px;   /* 标签、次要说明 */
+  --fs-base: 13px;   /* 卡片元信息 */
+  --fs-md:   14px;   /* 正文 */
+  --fs-lg:   15px;   /* 回答正文 */
+  --fs-xl:   17px;   /* 卡片标题 */
+  --fs-2xl:  22px;   /* 区块标题 */
+  --fs-3xl:  30px;   /* 页面主标题 */
+
+  --lh-tight: 1.35;  /* 标题 */
+  --lh-base:  1.75;  /* 正文 */
+
+  /* 字重只用三档：400 正文 / 500 强调 / 700 标题（此前 600 与 700 混用，分不出主次） */
+
+  /* ---------- 间距（4px 基数）----------
+     此前没有间距 token，padding/margin 全是手写值。 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* ---------- 圆角 ---------- */
+  --r-xs:   6px;     /* 标签、chip */
+  --r-sm:   10px;    /* 输入框、小按钮 */
+  --r-md:   14px;    /* 卡片 */
+  --r-lg:   20px;    /* 弹窗、大容器 */
+  --r-full: 999px;   /* 胶囊按钮 */
+
+  /* ---------- 阴影 ----------
+     关键：扩散半径大、透明度低。看起来像「微微离开纸面」，
+     而不是「贴了一张灰纸」——知识类产品靠留白和描边分层，阴影只是暗示。 */
+  --shadow-sm: 0 1px 2px rgba(70, 50, 30, .04), 0 1px 3px rgba(70, 50, 30, .04);
+  --shadow-md: 0 4px 16px -6px rgba(70, 50, 30, .10), 0 2px 6px -2px rgba(70, 50, 30, .06);
+  --shadow-lg: 0 16px 40px -16px rgba(70, 50, 30, .16), 0 4px 12px -4px rgba(70, 50, 30, .06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--bg);
+  line-height: var(--lh-base);
+  font-size: var(--fs-md);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: var(--clay-soft); }
+
+a { color: inherit; }
+
+/* 键盘可达性：所有可聚焦元素给一致的焦点环（此前没有全局规则，
+   各组件各写各的，不少地方完全没有可见焦点） */
+:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* 尊重系统的「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Element Plus 主色微调，贴近陶土红 ---- */
+.el-button--primary {
+  --el-button-bg-color: var(--clay);
+  --el-button-border-color: var(--clay);
+  --el-button-hover-bg-color: var(--clay-deep);
+  --el-button-hover-border-color: var(--clay-deep);
+  --el-button-active-bg-color: var(--clay-deep);
+  --el-button-active-border-color: var(--clay-deep);
+}
+/* 弹窗圆角跟随设计系统 */
+.el-dialog { border-radius: var(--r-lg) !important; }
+.el-message-box { border-radius: var(--r-lg) !important; }
+.el-message { border-radius: var(--r-full) !important; }
+
+/* ============================================================
+   处理中动效（参考 Nuxt UI 的 ChatShimmer / ChatMessages indicator）
+   ============================================================ */
+
+/* 微光扫过文字：双层背景——一层静止的底色，一层来回扫的高光，
+   用 background-clip: text 把它裁进文字里。
+   高光宽度由 --spread 决定，调用方可按文字长度传，不传就用回退值。 */
+.shimmer-text {
+  --spread: 60px;
+  background-image:
+    linear-gradient(90deg, transparent calc(50% - var(--spread)), var(--ink) calc(50%), transparent calc(50% + var(--spread))),
+    linear-gradient(var(--ink-3), var(--ink-3));
+  background-size: calc(200% + var(--spread) * 2 + 2px) 100%, auto;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 100% center; }
+  to   { background-position: 0% center; }
+}
+
+/* 「正在思考」的三点跳动：延迟错开，做出依次抬起的节奏 */
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.55; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ============================================================
+   按钮分级 —— 全站唯一定义
+   ------------------------------------------------------------
+   参考 Nuxt UI 的 variant 体系：按**视觉权重**分五档，一个视图里
+   只允许一个 solid（主操作），其余依次降级。
+     solid   最高 · 主操作，一屏只该有一个
+     outline 中   · 次要操作，以及并列的多个动作
+     soft    中低 · 标签式按钮、已选中的开关按钮
+     ghost   最低 · 图标按钮、行内动作
+     link    最低 · 正文里的文字链接
+   颜色用修饰类叠加（btn-danger / btn-sage），不要再各写一套 hover。
+   此前全站有约 40 个各不相同的按钮类名、60 处胶囊圆角，「危险」态
+   重复实现过 4 遍——这里收敛成一套，改一次全站生效。
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-2);
+  padding: 7px 16px;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---- 尺寸 ---- */
+.btn-sm { font-size: var(--fs-sm); padding: 5px 12px; }
+.btn-lg { font-size: var(--fs-lg); padding: 10px 24px; }
+.btn-block { width: 100%; }
+/* 方角：少数场景用（发送键、卡片角上的动作按钮） */
+.btn-rect { border-radius: var(--r-sm); }
+/* 图标按钮：只有图标没有文字，给固定方形尺寸，免得各写一遍 width/height */
+.btn-icon { padding: 0; width: 28px; height: 28px; border-radius: 50%; flex: none; }
+.btn-icon.btn-sm { width: 24px; height: 24px; }
+
+/* ---- 视觉权重 ---- */
+.btn-solid {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: #fff;
+}
+.btn-solid:hover:not(:disabled) { background: var(--clay-deep); border-color: var(--clay-deep); }
+
+.btn-outline { border-color: var(--line); color: var(--ink-2); }
+.btn-outline:hover:not(:disabled) { border-color: var(--clay); color: var(--clay-deep); }
+
+.btn-soft { background: var(--clay-soft); color: var(--clay-deep); }
+.btn-soft:hover:not(:disabled) { background: var(--clay); color: #fff; }
+
+.btn-ghost { color: var(--ink-3); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg-deep); color: var(--ink); }
+
+.btn-link { padding: 0; border: 0; color: var(--clay); }
+.btn-link:hover:not(:disabled) { text-decoration: underline; }
+
+/* ---- 语义色：叠加在上面任意一档上 ---- */
+.btn-danger.btn-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-danger.btn-solid:hover:not(:disabled) { background: var(--danger-deep); border-color: var(--danger-deep); }
+.btn-danger.btn-outline:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.btn-danger.btn-soft { background: var(--danger-soft); color: var(--danger); }
+.btn-danger.btn-soft:hover:not(:disabled) { background: var(--danger); color: #fff; }
+.btn-danger.btn-ghost:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
+.btn-danger.btn-link { color: var(--danger); }
+
+.btn-sage.btn-solid { background: var(--sage); border-color: var(--sage); color: #fff; }
+.btn-sage.btn-solid:hover:not(:disabled) { background: var(--sage-deep); border-color: var(--sage-deep); }
+.btn-sage.btn-outline { border-color: var(--sage-line); color: var(--sage-deep); }
+.btn-sage.btn-outline:hover:not(:disabled) { border-color: var(--sage); background: var(--sage-soft); color: var(--sage-deep); }
+.btn-sage.btn-soft { background: var(--sage-soft); color: var(--sage-deep); }
+.btn-sage.btn-soft:hover:not(:disabled) { background: var(--sage); color: #fff; }
+.btn-sage.btn-ghost:hover:not(:disabled) { background: var(--sage-soft); color: var(--sage-deep); }
+.btn-sage.btn-link { color: var(--sage-deep); }
+
+/* ---- 选中态：收藏 / 已分享这类开关型按钮 ----
+   放在语义色之后，颜色的「开」态跟随按钮自身的语义色走。 */
+.btn.is-on { background: var(--clay-soft); border-color: var(--clay); color: var(--clay-deep); }
+.btn-sage.is-on { background: var(--sage-soft); border-color: var(--sage); color: var(--sage-deep); }
+.btn-danger.is-on { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+
+/* ============================================================
+   空状态 —— 全站统一结构
+   ------------------------------------------------------------
+   此前有 4 套各写各的空状态：动态页是「圆形插画 + 标题 + 说明 + 按钮」，
+   个人中心和对话列表是光秃秃一行灰字，书架是一段虚线框文字。
+   统一成「插画 → 标题 → 说明 → 行动」四段，缺哪段就不渲染哪段。
+
+   三档尺寸：
+     默认   卡片内的空态（动态页整页空态）
+     -sm    行内 / 侧栏里的空态（对话列表、书架、收藏列表）
+     -lg    整页空态
+   ============================================================ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 48px 20px;
+}
+.empty-state-sm { padding: 22px 12px; gap: 3px; }
+.empty-state-lg { padding: 72px 20px; }
+
+.empty-state-art {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  margin-bottom: 8px;
+  background: var(--clay-soft);
+  color: var(--clay);
+}
+.empty-state-sm .empty-state-art { width: 44px; height: 44px; margin-bottom: 4px; }
+.empty-state-sm .empty-state-art svg { width: 22px; height: 22px; }
+
+.empty-state-title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  color: var(--ink);
+}
+/* 小尺寸用正文语气：这类空态多在一行里出现，标题不该抢内容区的注意力 */
+.empty-state-sm .empty-state-title {
+  font-family: var(--sans);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.empty-state-desc {
+  font-size: var(--fs-base);
+  color: var(--ink-3);
+  line-height: 1.8;
+  max-width: 36ch;
+}
+.empty-state-sm .empty-state-desc { font-size: var(--fs-sm); max-width: 32ch; }
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.empty-state-sm .empty-state-actions { margin-top: 6px; }
+
+
+

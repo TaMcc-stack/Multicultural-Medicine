@@ -1,0 +1,258 @@
+/* ============================================================
+   结构化回答的渲染样式（structuredAnswerHtml 的输出）
+   ------------------------------------------------------------
+   为什么单独一份而不是留在页面里：这段 CSS 服务的是**渲染出来的 HTML**，
+   而 Vue 的 scoped 样式加不上 data-v 属性到 v-html 的内容上，所以页面只能用
+   `:deep()` 去钻——钻出来的规则没法被另一个页面复用，于是每多一个渲染点就多一份拷贝。
+
+   约定：**给容器加上 .answer-body 类**，里面的 ans-* / lit-* / answer-text 就自动成形。
+   （answers 容器自身的排版——卡片边框、内边距、折叠区——仍由各页面自己写，
+     因为对话页和检索页的卡片骨架本来就不同。）
+
+   注意：QaView.vue 里还留着一份 scoped 的 :deep() 拷贝，尚未迁到这里。
+   没有一并删掉是因为「对话页的答案渲染完全不变」是硬要求，而 scoped 规则的
+   优先级高于本文件——留着它，对话页的渲染就逐字未变。迁过来是后续的清理项。
+   ============================================================ */
+
+.answer-body {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+.answer-body .key {
+  color: var(--clay-deep);
+  font-weight: 700;
+}
+.answer-body .answer-text {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+/* 区块之间留够空气：标题变轻之后，靠间距而不是靠字号来分节 */
+.answer-body .ans-block,
+.answer-body .ans-sec {
+  margin-top: 22px;
+}
+/* 区块标题：它只是分隔，不该和正文抢注意力。
+   小字号 + 主色 + 左侧短竖线：层级靠颜色和那道竖线建立，不靠字号和加粗堆叠。
+   色值用 --clay-deep 而非 --clay：13px 小字要保证对比度。 */
+.answer-body .ans-sec-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clay-deep);
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  padding-left: 9px;
+  border-left: 2px solid var(--clay);
+  margin-bottom: 7px;
+}
+.answer-body .ans-sec-body {
+  color: var(--ink-2);
+  line-height: 1.85;
+  font-size: 14.5px;
+}
+.answer-body .ans-table {
+  margin-top: 14px;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 520px;
+  font-size: 13px;
+}
+.answer-body .ans-table th,
+.answer-body .ans-table td {
+  border: 1px solid var(--sage-line);
+  padding: 7px 12px;
+  text-align: center;
+  background: #fff;
+}
+.answer-body .ans-table th {
+  background: rgba(160, 82, 45, 0.07);
+  color: var(--ink-2);
+  font-weight: 600;
+}
+/* 用户所问民族那一行：整行浅琥珀底 + 行首格加重。
+   底色必须打到 td 上——上面 `.ans-table td { background: #fff }` 会盖掉 tr 的背景色。
+   左侧那道竖线用 inset 阴影而不是 border-left：td 已有 1px 边框，再加边框会让整列宽 1px。 */
+.answer-body .ans-table tr.ans-row-focus td,
+.answer-body .lit-table tr.ans-row-focus td {
+  background: var(--amber-soft);
+}
+.answer-body .ans-table tr.ans-row-focus td:first-child,
+.answer-body .lit-table tr.ans-row-focus td:first-child {
+  font-weight: 700;
+  color: var(--clay-deep);
+  box-shadow: inset 3px 0 0 var(--clay);
+}
+/* 行首那个 🔍：缩小并压低对比度，它是标注不是内容，别把民族名挤到看不见 */
+.answer-body .ans-row-tag {
+  font-size: 11px;
+  margin-right: 4px;
+  opacity: 0.85;
+}
+/* 表格上方的说明句。它解释的是「为什么只有这几行带底色」，属于图注，
+   所以比正文更小更淡，跟着表格一起走而不是另起一个区块。 */
+.answer-body .ans-table-hint {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
+/* 引用块：左边框 + 浅底，用来放来源说明与提醒语 */
+.answer-body .ans-quote {
+  margin: 12px 0;
+  padding: 9px 14px;
+  border-left: 3px solid var(--accent-line);
+  background: var(--bg);
+  color: var(--ink-2);
+  border-radius: 0 4px 4px 0;
+}
+/* 列表：行距比正文松一点，项目符号用陶土色（与表格表头的同一套强调色） */
+.answer-body .ans-list {
+  margin: 10px 0 4px;
+  padding-left: 22px;
+}
+/* 条目间距按「空行分隔」给：6px 时相邻两条几乎贴在一起，读起来是一整段而不是几条。
+   16px 大致相当于正文的一个空行，条目边界一眼能分清。列表项之间到底有没有真空行
+   由模型决定（提示词要求空行），但间距不该跟着模型走——渲染器把空行吃掉、间距交给
+   这里给，两种输出才长得一模一样。 */
+.answer-body .ans-list li {
+  margin-bottom: 16px;
+  line-height: 1.9;
+}
+.answer-body .ans-list li:last-child { margin-bottom: 0; }
+.answer-body .ans-list li::marker { color: var(--clay-deep); }
+.answer-body .ans-chart {
+  margin-top: 16px;
+}
+.answer-body .ans-chart-title {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.answer-body .ans-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.answer-body .ans-bar-label {
+  flex: none;
+  width: 120px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.answer-body .ans-bar-track {
+  flex: 1;
+  background: var(--bg);
+  border-radius: 6px;
+  height: 14px;
+  overflow: hidden;
+}
+.answer-body .ans-bar-fill {
+  height: 100%;
+  background: var(--clay-deep);
+  border-radius: 6px;
+}
+.answer-body .ans-bar-val {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--clay-deep);
+  min-width: 52px;
+}
+.answer-body .ans-note {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 9px 12px;
+  line-height: 1.7;
+}
+.answer-body .ans-note.warn {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.answer-body .ans-scope-row {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.85;
+  margin-top: 4px;
+}
+.answer-body .ans-scope-row b {
+  color: var(--ink);
+}
+
+/* 三件套：证据来源 / 适用范围 / 使用边界 三张独立小卡片。
+   三张并列、窄屏自动折成竖排；每张是浅描边的小卡，标题带 emoji 一眼可分。 */
+.answer-body .ans-trio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.answer-body .ans-card {
+  flex: 1 1 200px;
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.answer-body .ans-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--clay-deep);
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+.answer-body .ans-card-body {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+/* 表格通用（lit-table 也出现在证据片段里，故不只在 answer-body 下生效） */
+.answer-body .lit-table,
+.evidence-body .lit-table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 420px;
+  font-size: 13px;
+}
+.answer-body .lit-table th,
+.answer-body .lit-table td,
+.evidence-body .lit-table th,
+.evidence-body .lit-table td {
+  border: 1px solid var(--sage-line);
+  padding: 7px 12px;
+  text-align: center;
+  background: #fff;
+}
+.answer-body .lit-table th,
+.evidence-body .lit-table th {
+  background: rgba(160, 82, 45, 0.07);
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.answer-body .lit-table .hl,
+.evidence-body .lit-table .hl {
+  background: var(--amber-soft);
+  font-weight: 600;
+  color: var(--clay-deep);
+}
+
+/* 提示条：无证据 / 降级说明 */
+.answer-body .lit-note,
+.evidence-body .lit-note {
+  font-size: 13px;
+  color: var(--ink-3);
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+}

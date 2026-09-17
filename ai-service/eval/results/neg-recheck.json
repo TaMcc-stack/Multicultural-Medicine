@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-09-11T16:00:39",
+  "base": "http://127.0.0.1:8000/api",
+  "with_generate": false,
+  "layers": {
+    "理解": {
+      "passed": 8,
+      "total": 8
+    },
+    "检索": {
+      "passed": 5,
+      "total": 5
+    },
+    "回答": {
+      "passed": 0,
+      "total": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "neg-bai-dm-diet",
+      "category": "负例·无证据",
+      "question": "白族糖尿病饮食要注意什么？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "diet",
+          "actual": "diet",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        },
+        {
+          "check": "检索·意图缺失标记",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 4.3
+    },
+    {
+      "id": "neg-bai-diet-colloquial",
+      "category": "负例·无证据",
+      "question": "白族饮食习惯里，哪些容易吃出糖尿病？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "白族",
+          "actual": "白族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "理解·意图",
+          "expected": "diet",
+          "actual": "diet",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        },
+        {
+          "check": "检索·意图缺失标记",
+          "expected": true,
+          "actual": true,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 5.2
+    },
+    {
+      "id": "neg-mongol-dm",
+      "category": "负例·无证据",
+      "question": "蒙古族糖尿病患病率是多少？",
+      "checks": [
+        {
+          "check": "理解·民族",
+          "expected": "蒙古族",
+          "actual": "蒙古族",
+          "pass": true
+        },
+        {
+          "check": "理解·疾病",
+          "expected": "糖尿病",
+          "actual": "糖尿病",
+          "pass": true
+        },
+        {
+          "check": "检索·找到证据",
+          "expected": false,
+          "actual": false,
+          "pass": true
+        }
+      ],
+      "evidence_count": 0,
+      "status": "none",
+      "elapsed": 5.6
+    }
+  ]
+}

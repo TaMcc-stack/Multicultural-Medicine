@@ -1,0 +1,875 @@
+<title>智能体系统架构</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── 设计令牌：沿用产品自身的设计系统（frontend/src/assets/main.css）
+      暖纸底 · 陶土红主色 · 鼠尾草绿辅色 · 琥珀警告色 ───────────────── */
+:root {
+  --bg:         #FBF6EF;
+  --bg-deep:    #F3EADD;
+  --surface:    #FFFFFF;
+  --ink:        #2B241D;
+  --ink-2:      #5C5348;
+  --ink-3:      #8A7F70;
+  --clay:       #B85A36;
+  --clay-deep:  #9A4628;
+  --clay-soft:  #F4E2D6;
+  --sage:       #3F6A58;
+  --sage-deep:  #305344;
+  --sage-soft:  #E4ECE2;
+  --amber:      #B77E2A;
+  --amber-soft: #F5E9CF;
+  --line:       #E9DFD1;
+  --line-2:     #F0E8DC;
+
+  --serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --sans:  "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  --mono:  "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(70,50,30,.05), 0 1px 3px rgba(70,50,30,.05);
+  --shadow-md: 0 6px 24px -10px rgba(70,50,30,.18);
+}
+
+/* 深色主题：同色系下压，主色提亮以保持对比度；不是简单反相 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:         #1B1613;
+    --bg-deep:    #241D18;
+    --surface:    #221C18;
+    --ink:        #F0E7DC;
+    --ink-2:      #C3B6A6;
+    --ink-3:      #94897B;
+    --clay:       #D9784F;
+    --clay-deep:  #E89372;
+    --clay-soft:  #3A251C;
+    --sage:       #6FA98C;
+    --sage-deep:  #8CC0A4;
+    --sage-soft:  #1E2C25;
+    --amber:      #D9A44C;
+    --amber-soft: #322714;
+    --line:       #362C24;
+    --line-2:     #2C241E;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.25);
+    --shadow-md: 0 6px 24px -10px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:         #1B1613;
+  --bg-deep:    #241D18;
+  --surface:    #221C18;
+  --ink:        #F0E7DC;
+  --ink-2:      #C3B6A6;
+  --ink-3:      #94897B;
+  --clay:       #D9784F;
+  --clay-deep:  #E89372;
+  --clay-soft:  #3A251C;
+  --sage:       #6FA98C;
+  --sage-deep:  #8CC0A4;
+  --sage-soft:  #1E2C25;
+  --amber:      #D9A44C;
+  --amber-soft: #322714;
+  --line:       #362C24;
+  --line-2:     #2C241E;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.25);
+  --shadow-md: 0 6px 24px -10px rgba(0,0,0,.55);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.75;
+  padding-inline: 20px;
+  padding-block: 0 60px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; }
+
+/* ── 页头 ─────────────────────────────────────────────── */
+header { padding-block: 44px 26px; border-bottom: 1px solid var(--line); }
+.eyebrow {
+  font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--sage); font-weight: 700;
+}
+h1 {
+  font-family: var(--serif); font-size: clamp(27px, 4.2vw, 38px);
+  font-weight: 700; line-height: 1.25; margin-top: 10px;
+  text-wrap: balance;
+}
+.lede { color: var(--ink-2); margin-top: 12px; max-width: 66ch; }
+
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.chip {
+  font-size: 12.5px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.chip b { color: var(--ink); font-weight: 600; }
+.chip.live { background: var(--sage-soft); border-color: var(--sage-soft); color: var(--sage-deep); }
+.chip.live::before { content: "● "; font-size: 10px; }
+
+/* ── 两栏：目录 + 内容 ─────────────────────────────────── */
+.layout { display: grid; grid-template-columns: 188px 1fr; gap: 44px; align-items: start; }
+nav {
+  position: sticky; top: 20px; padding-top: 34px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+nav a {
+  display: block; padding: 5px 10px; border-left: 2px solid var(--line);
+  font-size: 13.5px; color: var(--ink-3); text-decoration: none; transition: .15s;
+}
+nav a:hover { color: var(--clay); border-left-color: var(--clay); }
+nav a .n { font-family: var(--mono); font-size: 11px; margin-right: 7px; color: var(--ink-3); }
+
+main { padding-top: 34px; min-width: 0; }
+section { padding-block: 6px 38px; scroll-margin-top: 20px; }
+h2 {
+  font-family: var(--serif); font-size: 21px; font-weight: 700;
+  padding-bottom: 9px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+  display: flex; align-items: baseline; gap: 10px;
+}
+h2 .idx { font-family: var(--mono); font-size: 12px; color: var(--clay); font-weight: 500; }
+h3 { font-family: var(--serif); font-size: 15.5px; font-weight: 700; margin: 24px 0 10px; }
+p { color: var(--ink-2); margin-bottom: 10px; }
+p strong, li strong { color: var(--ink); font-weight: 600; }
+
+/* ── 服务卡片 ─────────────────────────────────────────── */
+.services { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.svc {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 16px 17px; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.svc h4 { font-family: var(--serif); font-size: 15px; font-weight: 700; }
+.svc .port {
+  font-family: var(--mono); font-size: 12px; color: var(--clay);
+  background: var(--clay-soft); border-radius: 999px; padding: 2px 9px;
+  align-self: flex-start;
+}
+.svc .stack { font-size: 12.5px; color: var(--ink-3); }
+.svc ul { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.svc li {
+  font-size: 13px; color: var(--ink-2); display: grid;
+  grid-template-columns: 84px 1fr; gap: 8px; align-items: baseline;
+}
+.svc li code { font-family: var(--mono); font-size: 11.5px; color: var(--sage); }
+.svc li span { min-width: 0; }
+
+/* ── 表格 ─────────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+thead th {
+  background: var(--bg-deep); font-size: 12px; font-weight: 700;
+  color: var(--ink-2); letter-spacing: .04em; white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: 0; }
+td code, th code {
+  font-family: var(--mono); font-size: 12px; color: var(--clay-deep);
+  background: var(--clay-soft); padding: 1px 6px; border-radius: 4px;
+  white-space: nowrap;
+}
+td .m { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.method { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--sage-deep); }
+.method.post { color: var(--clay-deep); }
+
+/* ── 流程步骤 ─────────────────────────────────────────── */
+ol.flow { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 0; }
+ol.flow > li {
+  counter-increment: step; position: relative;
+  padding: 0 0 20px 46px; border-left: 1px solid var(--line); margin-left: 14px;
+}
+ol.flow > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+ol.flow > li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute; left: -15px; top: 0;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11.5px; color: var(--clay);
+  display: grid; place-items: center;
+}
+.flow-head { font-weight: 600; color: var(--ink); display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; }
+.flow-head code {
+  font-family: var(--mono); font-size: 12px; color: var(--clay-deep);
+  background: var(--clay-soft); padding: 1px 7px; border-radius: 4px;
+}
+.flow-body { color: var(--ink-2); font-size: 14px; margin-top: 5px; }
+.flow-body ul { list-style: none; margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.flow-body li { padding-left: 15px; position: relative; font-size: 13.5px; }
+.flow-body li::before { content: "—"; position: absolute; left: 0; color: var(--ink-3); }
+
+/* ── 提示块 ───────────────────────────────────────────── */
+.note {
+  border-left: 3px solid var(--amber); background: var(--amber-soft);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 11px 15px; margin: 14px 0;
+  font-size: 13.5px; color: var(--ink-2);
+}
+.note b { color: var(--ink); }
+.note.sage { border-left-color: var(--sage); background: var(--sage-soft); }
+
+/* ── 页脚 ─────────────────────────────────────────────── */
+footer {
+  margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--ink-3);
+  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+}
+
+/* ── 窄屏 ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 0; }
+  nav {
+    position: static; flex-direction: row; flex-wrap: wrap;
+    padding-top: 20px; gap: 4px;
+  }
+  nav a { border-left: 0; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+  nav a:hover { border-color: var(--clay); }
+  .services { grid-template-columns: 1fr; }
+  main { padding-top: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">多民族特色医学智能体 · 技术文档</div>
+    <h1>系统架构与数据流转</h1>
+    <p class="lede">
+      面向普通群众的民族健康科普问答系统：从用户口语化提问，到可溯源的结构化回答。
+      本文档说明三大进程的职责划分、技术选型依据、对外接口清单，
+      一条提问在系统内部的完整流转路径，以及前端为了让这条流程不出错所做的几处设计。
+    </p>
+    <p class="lede" style="margin-top:8px">
+      系统里有<b>两个闭环</b>：一个是「提问 → 检索 → 可溯源回答」，另一个是
+      「发现知识库缺什么 → 用户确认这个需求 → 补录文献 → 审核入库 → 下次能答上」。
+      前者对用户，后者对运营；04 节的两条链路分别走这两个环。
+    </p>
+    <div class="meta-row">
+      <span class="chip live">三服务运行中</span>
+      <span class="chip">前端 <b>:5173</b></span>
+      <span class="chip">业务 <b>:8080</b></span>
+      <span class="chip">AI <b>:8000</b></span>
+      <span class="chip">大模型 <b>Qwen3-30B</b></span>
+      <span class="chip">嵌入 <b>bge-m3</b></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav>
+      <a href="#s1"><span class="n">01</span>系统模块</a>
+      <a href="#s2"><span class="n">02</span>技术选型</a>
+      <a href="#s3"><span class="n">03</span>核心接口</a>
+      <a href="#s4"><span class="n">04</span>数据流转</a>
+      <a href="#s5"><span class="n">05</span>关键设计决定</a>
+      <a href="#s6"><span class="n">06</span>评估体系</a>
+      <a href="#s7"><span class="n">07</span>前端实现要点</a>
+      <a href="#s8"><span class="n">08</span>内容沉淀与书签</a>
+      <a href="#s9"><span class="n">09</span>反馈与身份策略</a>
+    </nav>
+
+    <main>
+      <!-- 01 -->
+      <section id="s1">
+        <h2><span class="idx">01</span>系统模块</h2>
+        <p>系统按职责拆成三个独立进程，各自可单独重启、单独部署：</p>
+        <div class="services">
+          <div class="svc">
+            <h4>前端</h4>
+            <span class="port">:5173</span>
+            <div class="stack">Vue3 · TypeScript · Vite · Element Plus · Pinia</div>
+            <ul>
+              <li><code>views/</code><span>11 个页面：首页 / 登录 / 智能对话 / 高级检索 / 知识库 / 后台分析工作台 / 需求分析 / 文献补录 / 动态 / 个人中心 / 用户反馈</span></li>
+              <li><code>api/</code><span>9 个业务接口模块 + request.ts（统一解包与鉴权）：auth · chat · qa · kb · dynamic · favorite · searchHistory · gap · feedback</span></li>
+              <li><code>stores/</code><span>user（登录态）· analysis（RAG 结果共享，按来源分两条记录）· advancedSearch（检索页状态）</span></li>
+              <li><code>utils/</code><span>markdown（手写渲染器）· answerHtml（回答渲染，两页共用）· medicalVocab（民族/疾病词表）</span></li>
+            </ul>
+          </div>
+          <div class="svc">
+            <h4>业务后端</h4>
+            <span class="port">:8080</span>
+            <div class="stack">Spring Boot 4.1.1 · Java 17 · JdbcTemplate · H2</div>
+            <ul>
+              <li><code>auth/</code><span>登录注册 · token 持久化到表，重启不掉线 · 拦截器支持「可选登录」路径</span></li>
+              <li><code>chat/</code><span>会话与消息 CRUD（多轮问答落库）</span></li>
+              <li><code>kb/</code><span>文档摄取与审核：docx/pdf 解析、表格转 Markdown、元数据提取、文献补录</span></li>
+              <li><code>qa/</code><span>问答编排：理解 / 检索 / 生成的 Java 侧编排与 NLU 词表</span></li>
+              <li><code>social/</code><span>动态分享与收藏（含「一问一答」卡片）</span></li>
+              <li><code>search/</code><span>高级检索历史与结果快照 · 检索记录私有书签</span></li>
+              <li><code>gap/</code><span>知识缺口：登记 / 反馈 / 榜单，两个来源各自留痕</span></li>
+              <li><code>feedback/</code><span>用户反馈留言板：发布 / 点赞 / 状态 / 一键转缺口</span></li>
+              <li><code>common/</code><span>统一响应信封与全局异常</span></li>
+            </ul>
+          </div>
+          <div class="svc">
+            <h4>AI 服务</h4>
+            <span class="port">:8000</span>
+            <div class="stack">Python · FastAPI · httpx（无 LangChain，检索全手写）</div>
+            <ul>
+              <li><code>understanding</code><span>问题理解：民族 / 疾病 / 意图 / 指标</span></li>
+              <li><code>kb</code><span>BM25 + 向量余弦混合检索</span></li>
+              <li><code>answer</code><span>结构化回答生成与防幻觉校验</span></li>
+              <li><code>tables</code><span>压平表格解析与键值检索</span></li>
+              <li><code>evidence_extract · summarize · field_extract</code><span>摄取期与补录期的抽取：结构化证据、摘要、字段</span></li>
+              <li><code>expansion</code><span>查询扩展（默认关闭，实测无收益）</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 -->
+      <section id="s2">
+        <h2><span class="idx">02</span>技术选型</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>层</th><th>选型</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>前端</td><td>Vue3 + Vite + Element Plus + Pinia</td><td>SPA；用 keep-alive 缓存对话页，切页不丢状态</td></tr>
+              <tr><td>业务后端</td><td>Spring Boot + JdbcTemplate</td><td>非 JPA，手写 SQL；schema.sql 启动自动建表</td></tr>
+              <tr><td>业务库</td><td>H2 磁盘库（MODE=MySQL）</td><td>可平滑切 MySQL，驱动已内置</td></tr>
+              <tr><td>AI 服务</td><td>FastAPI + httpx</td><td>不引 LangChain——知识库规模小，手写检索更可控</td></tr>
+              <tr><td>大模型</td><td>Qwen3-30B-A3B-Instruct</td><td>经硅基流动调用，负责回答生成</td></tr>
+              <tr><td>嵌入模型</td><td>BAAI/bge-m3</td><td>负责检索向量</td></tr>
+              <tr><td>检索</td><td>BM25 + 内存余弦（0.55 / 0.45）</td><td>无向量库；切片量级为几十，全量在内存更快</td></tr>
+              <tr><td>评估</td><td>自研 <code>eval/</code></td><td>规则式三层检查 + 反幻觉核对，无 RAGAS 依赖</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 03 -->
+      <section id="s3">
+        <h2><span class="idx">03</span>核心接口</h2>
+
+        <h3>问答主链路 —— 前端实际走的三个</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>接口</th><th>作用</th></tr></thead>
+            <tbody>
+              <tr><td><span class="method post">POST</span> <code>/api/understand</code></td><td>问题理解：抽取民族 / 疾病 / 意图 / 指标，并判定泛化检索、泛民族、医疗安全标记</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/evidence-pool</code></td><td>检索并判定证据充分度（🟢 充分 / 🟡 部分相关 / 🔴 无直接证据），供后台溯源</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/generate</code></td><td>基于证据生成结构化回答</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>AI 服务其余接口</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>接口</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><span class="method">GET</span> <code>/api/ai/health</code></td><td>健康检查与索引状态</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/retrieve</code></td><td>纯检索（简化版，不含充分度判定）</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/ai/kb/vocab</code></td><td>知识库词表：「哪些民族 × 疾病组合真的收录了资料」，高级检索的三个下拉据此生成</td></tr>
+              <tr><td><span class="method">GET</span> <code>/api/ai/kb/documents/{id}</code></td><td>文档全文 —— 证据溯源跳转原文时使用</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/ai/kb/documents</code></td><td>Java 摄取完成后回调：切片入库</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/ai/kb/evidence/extract</code></td><td>大模型从切片抽取结构化证据</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/ai/kb/summarize</code></td><td>大模型对整份资料生成摘要</td></tr>
+              <tr><td><span class="method post">POST</span> <code>/api/ai/kb/extract-fields</code></td><td>补录工作台：从管理员粘贴的原文里抽结构化字段</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          <b>高级检索不走 <code>/api/understand</code>。</b>它的三个槽位（民族 / 疾病 / 方面）是用户在
+          下拉里直接选的，本身就是结构化输入，不需要再跑一轮 NLU —— 那条链路只调
+          <code>evidence-pool</code> + <code>generate</code>，中间省掉一次大模型往返。
+          代价是「对话页能问出的意图」与「高级检索能选的方面」是两张不同的表（见 05）。
+        </div>
+
+        <h3>业务后端接口</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>前缀</th><th>主要端点</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>/api/auth</code></td><td><span class="m">login · register · logout · me</span></td><td>登录鉴权</td></tr>
+              <tr><td><code>/api/conversations</code></td><td><span class="m">CRUD + /{id}/messages</span></td><td>会话管理；追加消息返回自增 id，供动态溯源</td></tr>
+              <tr><td><code>/api/kb</code></td><td><span class="m">upload · parse · docs · files</span><br><span class="m">review · supply · supply/preview</span></td><td>文档上传、异步解析进度、原文预览；审核与文献补录</td></tr>
+              <tr><td><code>/api/dynamics</code></td><td><span class="m">CRUD + /mine · /added · /user/{userId} · /qa</span></td><td>回答转存为公开动态；<code>/qa</code> 发布「一问一答」卡（按 <code>qaKey</code> 全局唯一）</td></tr>
+              <tr><td><code>/api/favorites</code></td><td><span class="m">动态：POST · DELETE /{id} · GET /ids</span><br><span class="m">对话：POST /conversations · DELETE /conversations/{id} · GET /conversations · GET /conversations/ids</span></td><td>两类收藏语义不同、分开存储：收藏<b>动态</b>是公开内容，收藏<b>对话</b>是私有书签</td></tr>
+              <tr><td><code>/api/search-history</code></td><td><span class="m">POST（幂等 upsert）· GET · DELETE /{id}</span><br><span class="m">/{id}/favorite · GET /favorites · GET /favorites/ids</span></td><td>高级检索历史：结果快照存 <code>detail_json</code>，回放不必重跑 RAG；下半区是检索记录的私有书签（第三种收藏）</td></tr>
+              <tr><td><code>/api/gaps</code></td><td><span class="m">POST · /{id}/feedback · /{id}/resolve · GET /{id} · GET?sort=</span><br><span class="m">POST /chat-feedback · GET /feedback/mine</span></td><td>知识缺口：登记 / 反馈 / 榜单（管理员）；<code>chat-feedback</code> 是对话页「反馈此问题」的入口</td></tr>
+              <tr><td><code>/api/feedback</code></td><td><span class="m">GET · POST · /{id}/like · /{id} · /{id}/status · /{id}/to-gap</span></td><td>用户反馈留言板。列表与发布<b>允许匿名</b>，其余端点强制登录</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 04 -->
+      <section id="s4">
+        <h2><span class="idx">04</span>数据流转</h2>
+
+        <h3>A · 问答主链路</h3>
+        <p>以「白族糖尿病患病率是多少？」为例，一次提问在系统内的完整路径：</p>
+        <ol class="flow">
+          <li>
+            <div class="flow-head">前端发起理解 <code>POST /api/understand</code></div>
+            <div class="flow-body">
+              前端把当前问题连同最近几轮上下文一起发出。后端依次跑三层：
+              <ul>
+                <li>规则层 —— 民族 / 疾病 / 意图关键词、泛民族词、医疗安全正则</li>
+                <li>大模型层 —— 补全槽位、常识推理、判定是否索要用药建议</li>
+                <li>历史继承 —— 追问省略疾病名时，从上一轮继承</li>
+              </ul>
+              返回 <span class="m">{民族, 疾病, 意图, 指标, 泛化标记, 用药标记, 状态}</span>
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">前端按状态决定是否放行</div>
+            <div class="flow-body">
+              缺民族且非泛化 / 非用药咨询 → 提示用户补充，<strong>流程到此终止</strong>；
+              否则写入本地存储，进入问答。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">检索与证据提取 <code>POST /api/evidence-pool</code></div>
+            <div class="flow-body">
+              <ul>
+                <li>疾病硬过滤 → 意图相关性判定（在本民族子段内查关键词，避免拿他族内容作答）</li>
+                <li>BM25 与向量余弦融合打分，叠加民族 / 疾病 / 意图权重</li>
+                <li>表格键值检索：患病率类问题强制置顶数值表</li>
+                <li>意图硬过滤 → 按来源去重</li>
+                <li>聚焦片段截取（锚点按距离衰减）+ 计算原文偏移量</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">生成回答 <code>POST /api/generate</code></div>
+            <div class="flow-body">
+              先判医疗安全边界 —— 命中则<strong>不检索、不喂证据</strong>，直接返回就医引导话术；
+              否则做越界清洗（他族 / 他病 / 无据数字），再交大模型按固定结构生成。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">前端渲染</div>
+            <div class="flow-body">
+              依据文献（可展开、点击片段跳原文并定位高亮）、追问胶囊、收藏与分享按钮。
+            </div>
+          </li>
+        </ol>
+
+        <h3>B · 文档摄取链路</h3>
+        <ol class="flow">
+          <li>
+            <div class="flow-head">上传 <code>POST /api/kb/upload</code></div>
+            <div class="flow-body">落盘 + 解析（docx 的表格转为 Markdown 保留结构），返回任务。</div>
+          </li>
+          <li>
+            <div class="flow-head">后台异步处理</div>
+            <div class="flow-body">
+              切片入库 → 大模型抽取结构化证据 → 生成内容摘要，三步都回调 AI 服务。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">前端轮询进度</div>
+            <div class="flow-body">书架卡片实时显示解析状态，完成即可检索。</div>
+          </li>
+        </ol>
+
+        <h3>C · 请求分流规则</h3>
+        <div class="note">
+          <b>改接口必看。</b>开发环境下 Vite 按前缀分流，新增接口前缀必须同步修改
+          <code>vite.config.ts</code>，否则会被最后一条兜底规则转到 AI 服务而 404。
+          这条已经踩过一次：新增 <code>/api/feedback</code> 时漏了规则，界面上直接弹出一句
+          <code>Not Found</code>——那是 FastAPI 的 <code>{"detail":"Not Found"}</code>，
+          不是业务后端的报错。看到「Not Found」先查分流表，别去翻服务端日志。
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>路径前缀</th><th>转发目标</th></tr></thead>
+            <tbody>
+              <tr><td><code>/api/auth</code> <code>/api/conversations</code> <code>/api/qa</code> <code>/api/kb</code> <code>/api/dynamics</code> <code>/api/favorites</code> <code>/api/search-history</code> <code>/api/gaps</code> <code>/api/feedback</code> <code>/api/health</code></td><td>Spring Boot <span class="m">:8080</span></td></tr>
+              <tr><td>其余 <code>/api/**</code>（含 <code>/api/ai/*</code>、<code>/api/understand</code>、<code>/api/evidence-pool</code>、<code>/api/generate</code>）</td><td>FastAPI <span class="m">:8000</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>D · 高级检索链路（主链路的短路版）</h3>
+        <p>
+          与 A 的区别只有一处：<b>跳过 <code>/api/understand</code></b>。三个槽位由下拉给出，
+          直接调检索与生成，省掉一次大模型往返。
+        </p>
+        <ol class="flow">
+          <li>
+            <div class="flow-head">取词表 <code>POST /api/ai/kb/vocab</code></div>
+            <div class="flow-body">
+              下拉里只列知识库<b>真有资料</b>的「民族 × 疾病」组合，以及该组合实际覆盖了哪些方面——
+              免得用户选到一个必然查不到的组合。词表扫描的是切片文本（切片的民族/疾病字段是空的，
+              全靠子串匹配）。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">检索 + 生成</div>
+            <div class="flow-body">
+              与 A 的第 3、4 步同一条链路，只是槽位由前端直接给定。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">存档 <code>POST /api/search-history</code></div>
+            <div class="flow-body">
+              把「答案 + 打包证据」存成快照（幂等键：用户 + 民族 + 疾病 + 方面）。存快照而不是重跑，
+              是因为重跑会因模型随机性给出与用户当时看到的<b>不一样</b>的答案——那不叫回放。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">未命中则登记缺口</div>
+            <div class="flow-body">
+              证据池返回空时调 <code>POST /api/gaps</code> 记一条需求，用户可再点「反馈缺文献」
+              把自己的名字加上去。这条记录的去向见下面的 E。
+            </div>
+          </li>
+        </ol>
+
+        <h3>E · 知识缺口闭环</h3>
+        <p>
+          这是本系统的第二个闭环（第一个是 A 的「提问 → 回答」）。它要回答的不是用户的问题，
+          而是<b>知识库自己的缺口</b>：哪些「民族 × 疾病 × 方面」有人要、但库里没有。
+        </p>
+        <ol class="flow">
+          <li>
+            <div class="flow-head">发现：两个来源各自留痕</div>
+            <div class="flow-body">
+              同一「民族 + 疾病 + 方面」全库只有一行（唯一键不含用户），但来源用<b>两列标记</b>分别记，
+              因为同一组合完全可能被两个入口都碰过：
+              <ul>
+                <li><b>高级检索未命中</b> —— 自动登记。槽位是用户从下拉里选的，本身就是结构化的需求信号。</li>
+                <li><b>智能对话未命中</b> —— 要用户点了【反馈此问题】才登记。那里的槽位是 NLU 猜的，
+                  <b>自动登记会把每一次猜测都变成一条需求</b>，而猜测会错。</li>
+              </ul>
+              两者可以同时为真，界面上两个来源徽标一起显示。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">聚合：被问次数与反馈人数分开算</div>
+            <div class="flow-body">
+              <code>ask_count</code> 记「被要过几次」，<code>feedback_count</code> 记
+              <b>有多少人</b>想要（按用户去重，另存一张明细表）。
+              后者才是排序依据——若按点击次数累加，一个人连点 50 下就能把某条刷到榜首。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">呈现：后台需求分析</div>
+            <div class="flow-body">
+              三个榜各回答一个问题：热门话题（大家在关心什么，按被问次数）、
+              未解决话题（还欠着什么，按反馈人数）、已解决历史。管理员在这里决定补什么。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">补录：文献补录工作台</div>
+            <div class="flow-body">
+              从缺口点「去补充」进入，工作台预填关键词。管理员粘原文或传文件，
+              由 <code>/api/ai/kb/extract-fields</code> 抽结构化成表格行——
+              知识库的形态是<b>多文献汇编</b>，不是单篇论文，所以补进来的东西必须逐条可溯源。
+              这份文档带着 <code>gap_id</code> 入库，且<b>强制进待审核</b>。
+            </div>
+          </li>
+          <li>
+            <div class="flow-head">收口：审核通过<b>且索引同步成功</b></div>
+            <div class="flow-body">
+              只打「通过」还不够——同步失败时文档根本没进检索索引，标成「已补充」会让缺口
+              凭空消失，比暴露更难发现。所以只有两个条件都满足才结掉缺口；
+              补录的那份文档后来被删掉时，缺口<b>退回待补充</b>。
+            </div>
+          </li>
+        </ol>
+        <div class="note sage">
+          <b>两个缺口来源的判据不同，是刻意的。</b>高级检索的三个槽位来自下拉，可信；
+          对话页的槽位来自 NLU，会错（例如「CKM」在服务端词表里就没有）。
+          与其让两边都自动登记、再想办法过滤噪声，不如让不可信的那一边<b>必须由用户点头</b>。
+        </div>
+      </section>
+
+      <!-- 05 -->
+      <section id="s5">
+        <h2><span class="idx">05</span>关键设计决定</h2>
+        <p>这些地方没有随大流选型，各有明确理由：</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>决定</th><th>原因</th></tr></thead>
+            <tbody>
+              <tr><td>不引 LangChain / 向量库</td><td>知识库规模只有几十个切片，手写 BM25 + 余弦更好控、无重依赖</td></tr>
+              <tr><td>Java 管业务、Python 管 AI</td><td>前端契约不变的前提下分层，便于将来把业务层整体迁到 Java</td></tr>
+              <tr><td>检索在整块切片上打分，展示用聚焦片段</td><td>前者保召回，后者保可读性 —— 两者分开，用偏移量打通</td></tr>
+              <tr><td>医疗安全用独立布尔标记而非新增意图码</td><td>5 码意图是检索主题匹配的依据与前后端契约，塞进第 6 个码会污染主题过滤</td></tr>
+              <tr><td>反幻觉用程序核对，不靠提示词</td><td>把回答里每个百分比回查证据原文，比提示词可靠，且能自动回归</td></tr>
+              <tr><td>查询扩展默认关闭</td><td>实测使检索通过率从 89.7% 降到 87.2%，两次运行一致 —— 召回本已饱和，扩展只带来打分扰动</td></tr>
+              <tr><td>两个缺口来源，只有可信的那个自动登记</td><td>高级检索的槽位来自用户选的下拉，可直接采信；对话页的槽位来自 NLU，会错。不可信的来源<b>必须由用户点一下</b>才登记，否则每一次猜测都会变成一条需求</td></tr>
+              <tr><td>缺口来源用<b>两列标记</b>而不是一列枚举</td><td>唯一键是「民族 + 疾病 + 方面」，同一组合可能既被检索记过、又被对话反馈过。一列枚举只能记一个，另一个入口的事实就丢了——榜单上会显示成「只有高级检索」，与用户刚做的事对不上</td></tr>
+              <tr><td>认不出疾病时存<b>占位串</b>而不是留空</td><td>疾病列是 NOT NULL 且参与唯一键；留空的话 SQL 里 NULL 之间互不相等，同一组合每反馈一次就新建一行，「同一缺口全库一行」的前提就没了</td></tr>
+              <tr><td>「可选登录」与「排除拦截器」是两件事</td><td>被排除的路径<b>根本不解析 token</b>，连已登录用户也会被当成匿名——对「匿名可用、登录则更好」的接口，那等于把登录用户的身份也丢了（发的帖显示不出昵称、列表回显不了「我点没点过赞」）。可选登录是「解析但不强制」</td></tr>
+              <tr><td>点赞 / 收藏 / 缺口反馈都按「人」去重</td><td>一律 <code>(目标, 用户)</code> 唯一索引 + 明细表 COUNT。若是按点击累加，一个人连点就能把某条刷到榜首，排行榜失去意义</td></tr>
+              <tr><td>检索记录回放读<b>存档快照</b>，不重跑 RAG</td><td>重跑会因模型随机性给出与用户当时看到的不同的答案，那不叫回放。代价是快照要单独设计形状（只留展示需要的字段，不带文档全文，否则单条记录会膨胀到几十 KB）</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 06 -->
+      <section id="s6">
+        <h2><span class="idx">06</span>评估体系</h2>
+        <p>
+          每次改动检索、提示词或问题理解后跑一遍 <code>eval/run_eval.py</code>，量化「改好了还是改坏了」，
+          不再靠手工挑几个问题试。
+        </p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>层</th><th>检查内容</th><th>依赖大模型</th></tr></thead>
+            <tbody>
+              <tr><td>理解</td><td>民族 / 疾病 / 意图 / 是否泛化 / 是否用药咨询</td><td>间接</td></tr>
+              <tr><td>检索</td><td>是否找到证据、意图缺失判定、证据里该有的数值在不在、是否被安全拦截</td><td>否</td></tr>
+              <tr><td>回答</td><td>该有的数值在不在、不该有的在不在、<strong>有没有编造文献外的数字</strong></td><td>是</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note sage">
+          <b>最有价值的是「回答·无编造数字」。</b>把回答里出现的每一个百分比都拿回证据原文核对，
+          对不上即判编造 —— 这是纯规则可自动化的检查，比让大模型当裁判更稳。
+        </div>
+        <p style="margin-top:14px">
+          用例集分八类：精准检索、意图区分、泛化检索、负例·无证据、口语化、跨民族对比、泛民族、医疗安全。
+          期望值全部取自知识库里真实存在的内容，加用例前必须先确认库里有那个数，否则会得到假的失败。
+        </p>
+      </section>
+
+      <!-- 07 -->
+      <section id="s7">
+        <h2><span class="idx">07</span>前端实现要点</h2>
+        <p>
+          前端不只是渲染层——问答本身是一个有状态的异步流程。下面几处是为了让它不出现
+          「答案串号、内容丢失、页面卡死」而做的设计，都不是照着常规写法来的。
+        </p>
+
+        <h3>并发：单飞锁</h3>
+        <div class="note">
+          <b>一次只允许一个问题在跑。</b>锁加在 <code>verify()</code> 这个唯一入口上，而不是按钮上——
+          推荐问题、追问胶囊、发送键、回车键四条路径都汇聚到这里，光禁用按钮挡不住键盘。
+        </div>
+        <p>
+          之所以必须加：<code>analysisStore</code> 是 Pinia <b>单例</b>，却被当作「一次问答的临时缓冲区」用——
+          <code>load()</code> 把检索结果与生成结果写进 store，渲染时再从同一个 store 读出来。
+          同一来源的两条请求并发时会互相覆写，结果是 <b>A 问题的卡片里渲染出 B 问题的答案</b>。
+          所以这不只是「请求堆积变慢」，而是内容串号。
+        </p>
+        <div class="note">
+          <b>store 里现在有两条记录，不是一个槽位。</b>原先只有一个槽位，于是「智能对话」与「高级检索」
+          这两个入口会互相覆盖：高级检索要打两次大模型、几十秒很正常，用户等不及切去对话页问一句，
+          两边谁后跑完谁占住工作台，另一方的分析被静默顶掉。
+          现在分成 <code>records.dialogue</code> / <code>records.search</code> 两条各存各的，
+          后台用「来源」开关选择看哪一条。<b>但来源内部的并发仍然要靠单飞锁挡</b>——拆开解决的只是跨入口的覆盖。
+        </div>
+        <p>配套的三件事：</p>
+        <ul>
+          <li><b>解锁写在 <code>finally</code></b>——<code>understand</code> / <code>load</code> 抛错时也必须释放，否则页面永久卡死。</li>
+          <li><b>锁不复用既有的按钮状态</b>——那个状态会被输入事件改成「可发送」，锁会自己打开。</li>
+          <li><b>生成期间禁止切换会话</b>——在飞的请求完成后会把这一问一答写进<b>切换后</b>的会话，造成串号。选「禁止切换」而不是「取消请求」，是因为取消会让用户切回来时看到一个残缺的回答，反而更难解释。</li>
+        </ul>
+
+        <h3>乐观更新与「在途提问」</h3>
+        <p>
+          点下发送就<b>立即清空输入框</b>，并把提问气泡挂到对话流末尾，不等后端返回——
+          用户马上看到「问题已经发出去了」，而不是盯着输入框里的原文怀疑到底发没发。
+          同时输入框禁用：问题一发出就不属于输入框了，改它也不会影响在跑的那一轮。
+        </p>
+        <p>
+          一个必要的补偿：问题被<b>校验拒绝</b>时（比如只说了民族、没说疾病）要把原文回填进输入框。
+          否则用户乐观清空后就丢了自己刚打的字，得整段重打——这是「乐观更新」在有校验环节的系统里必须配的一步。
+        </p>
+
+        <h3>一条线程：历史回放 + 本会话新增</h3>
+        <p>
+          打开旧会话（服务端消息）与在本会话里新问几轮，原本是两套渲染分支，靠「有没有历史」二选一。
+          代价是追问时必须先清空历史才能把显示权交给新回合——<b>用户正读着的那几轮会当场消失</b>。
+          现在两者合并成一条线程渲染：历史与新回合天然拼在一起，分享打包也因此拿到了完整对话
+          （此前只会分享出新问的那半截）。
+        </p>
+
+        <h3>「没答到点子上」的判据不只是「没检索到」</h3>
+        <p>
+          对话页在回答底部给一个【反馈此问题】入口，但它<b>不能只在「一条证据都没检索到」时出现</b>。
+          实际最常见、也最该反馈的是另一种：用户问「傣族CKM患病率」，系统没识别出 CKM
+          （服务端词表里没有这个词），于是<b>退化成「民族 + 意图」的泛化检索</b>，
+          拿傣族糖尿病的数字作答——表面上「检索到了证据」，用户要的东西却没给到。
+        </p>
+        <p>所以判据是「用户要的东西没给到」，三种情形满足其一：</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>信号</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>evidence_found = false</code></td><td>一条证据都没检索到</td></tr>
+              <tr><td><code>generalized</code></td><td>疾病没被识别出来，回答的是该民族的通用资料</td></tr>
+              <tr><td><code>intent_missing</code></td><td>找到了背景资料，但没有一条对应所问的方面</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          排除医疗安全边界——用药 / 诊疗咨询是<b>刻意不检索</b>（见 A 的第 4 步），不是知识缺口，
+          把它引导成「我们会优先补充」就跑偏了。
+        </p>
+
+        <h3>「已反馈」为什么按槽位回显</h3>
+        <p>
+          理想的做法是把标记写进那一轮消息的 <code>detail</code> 里，精确到回合。做不到——
+          <b>没有「更新已存在消息」的接口</b>（追加消息只能新增），而用户点反馈时那条消息早就落库了。
+        </p>
+        <p>
+          于是改成：进页面时拉一次「我反馈过的缺口」，按 <code>民族|疾病|方面</code> 比对。
+          代价是同一会话里对同一组合问两次、两轮都会显示已反馈；好处是刷新不丢，
+          还顺带覆盖了「换个会话问同一组合」。语义上也自洽——服务端本来就按 <code>(缺口, 用户)</code>
+          去重，同一组合再点一次是空操作，所以它一律显示「已反馈」才是诚实的。
+        </p>
+        <p>
+          配套的一个兜底：疾病槽位在 NLU 没认出来时，会<b>退回前端自己的词表</b>从原话里再认一次
+          （「CKM」前端有、服务端那 7 个疾病里没有）。不退这一步，缺口只能记成「未识别疾病」，
+          管理员得去读原话才知道用户要什么。
+        </p>
+
+        <h3>URL 交接</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>参数</th><th>来源</th><th>行为</th></tr></thead>
+            <tbody>
+              <tr><td><code>?q=&lt;问题&gt;</code></td><td>首页热门问题</td><td>开一段新对话并<b>自动提问</b>；未登录时随 redirect 带到登录后再执行</td></tr>
+              <tr><td><code>?conv=&lt;id&gt;</code></td><td>个人中心的「查看」</td><td>打开指定会话回放</td></tr>
+              <tr><td><code>?new</code></td><td>「新建对话」</td><td>清空到空白会话</td></tr>
+              <tr><td><code>?userId=&lt;id&gt;</code></td><td>动态页点作者名</td><td>个人中心进入<b>访客模式</b>：只展示对方的公开分享，对话与收藏不对外</td></tr>
+              <tr><td><code>?h=&lt;id&gt;</code></td><td>个人中心的「查看」</td><td>高级检索页还原<b>那一条检索记录</b>的快照（不重跑 RAG）；已在最近 50 条之外时如实提示并让用户重搜</td></tr>
+              <tr><td><code>?gap=&lt;id&gt;</code></td><td>需求分析的「去补充」</td><td>文献补录工作台载入该缺口，显示在补哪个缺口并预填关键词</td></tr>
+              <tr><td><code>?tab=qa</code></td><td>高级检索分享成功后</td><td>动态页直接切到「一问一答」子 Tab</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          参数一律在读取后用 <code>router.replace</code> 消费掉，避免刷新或重新进入时重复触发。
+          注意个人中心的访客模式还额外监听了一次——路由 name 相同、只有 query 变化时 Vue Router 会
+          <b>复用组件实例</b>，挂载钩子不会重跑。
+        </p>
+
+        <h3>样式系统</h3>
+        <p>
+          全站视觉变量与按钮分级集中在 <code>frontend/src/assets/main.css</code>：颜色 / 字阶 / 间距 / 圆角四组
+          token，<code>.btn</code> 五档权重分级（solid / outline / soft / ghost / link + 尺寸 + 语义色），
+          以及 <code>.empty-state</code> 空状态结构。视图只写布局，不再各自定义按钮样式——
+          详见 <code>docs/ui-spec.html</code>。
+        </p>
+      </section>
+
+      <!-- 08 -->
+      <section id="s8">
+        <h2><span class="idx">08</span>内容沉淀与三类书签</h2>
+        <p>
+          用户产出的东西要有地方落。这里刻意<b>没有做一个统一的「收藏」</b>——
+          收藏的对象有三种，可见性各不相同，混在一张表里迟早会把私有的东西公开出去。
+        </p>
+
+        <h3>公开的那一侧：动态</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>类型</th><th>来源</th><th>幂等键</th></tr></thead>
+            <tbody>
+              <tr><td><code>dialogue</code> 多轮对话分享</td><td>对话页「分享至动态」/ 个人中心</td><td><code>(用户, 会话)</code> —— 重复分享是更新标题与内容，不新增</td></tr>
+              <tr><td><code>qa</code> 一问一答卡</td><td>高级检索结果页 / 个人中心的检索记录</td><td><code>qaKey = 民族|疾病|方面</code>，<b>全局唯一</b>——同一组合在整个社区里只有一张卡，换个账号分享也是刷新</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          两者存成同一种载荷（<code>{version:2, turns:[…]}</code>），问答卡就是「只有一轮的对话」。
+          这样详情弹窗不用写两套渲染——它本来就按 turns 数组渲染，长度为 1 天然兼容。
+        </p>
+
+        <h3>私有的那一侧：三种书签各一张表</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>表</th><th>收藏什么</th><th>谁能看</th></tr></thead>
+            <tbody>
+              <tr><td><code>user_favorite</code></td><td>已发布的<b>动态</b>（含别人分享的）</td><td>公开内容，收藏关系私有</td></tr>
+              <tr><td><code>user_conversation_favorite</code></td><td><b>自己的对话</b></td><td>私有书签，不公开发布</td></tr>
+              <tr><td><code>user_search_favorite</code></td><td>一条<b>高级检索记录</b></td><td>私有书签</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">
+          <b>为什么收藏对话要单独一张表。</b>早先没有它，收藏对话只能先转存成动态再收藏，
+          于是「点收藏」这个动作<b>会把内容公开出去</b>——私有书签与公开发布被绑成了一件事。
+          拆开之后，收藏就只是收藏。
+        </div>
+        <p>
+          个人中心的「我的收藏」把三类<b>分组</b>列出而不是合成一个列表：它们能做的事不同，
+          混在一起用户分不清哪条能点、哪条点了会跳去哪。
+        </p>
+      </section>
+
+      <!-- 09 -->
+      <section id="s9">
+        <h2><span class="idx">09</span>用户反馈与身份策略</h2>
+        <p>
+          留言板是全站<b>唯一不需要登录</b>的业务页面：未登录也能浏览、也能发布。
+          它要回答的不是「知识库里缺哪个组合」（那是 04-E 的事），而是
+          <b>用户自己说出来的、形状更宽的需求</b>——可能指向知识库之外的东西，
+          甚至是抱怨。所以它不混进缺口榜，单独一块。
+        </p>
+
+        <h3>可选登录：解析但不强制</h3>
+        <div class="note">
+          <b>这是为了让「匿名可用、登录则更好」成立。</b>项目的鉴权默认是对所有
+          <code>/api/**</code> 一律要求登录，而「放行某些路径」的现成手段是
+          <code>excludePathPatterns</code>——但被排除的路径<b>根本不进拦截器</b>，
+          token 不会被人解析，连已登录用户也会被当成匿名。
+        </div>
+        <p>
+          后果很具体：<b>已登录用户发的帖会显示成「匿名用户」</b>，
+          列表也回显不了「我点没点过赞」（没有身份就无从判断）。
+          所以另加了一组「可选登录」路径（配置项 <code>app.auth.optional-paths</code>）：
+          命中这些路径时，token 有效就照常注入 <code>userId</code>，没有或已失效就放行当匿名，不抛 401。
+        </p>
+        <p>
+          失效 token 在可选路径上<b>按匿名处理而不是 401</b>：公开页面上因为 token 过期就被弹回登录页
+          很恼人，而这条路径本来就有匿名能力，降级是合理的。
+        </p>
+
+        <h3>哪些动作要登录，哪些不要</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>动作</th><th>要登录吗</th><th>原因</th></tr></thead>
+            <tbody>
+              <tr><td>浏览留言板 / 发布反馈</td><td>不要</td><td>公开页面，发布者记为空则显示「匿名用户」</td></tr>
+              <tr><td>点赞</td><td><b>要</b></td><td>「同一用户只能点一次」没有身份就无从去重，匿名点赞无法保证不被连点刷榜</td></tr>
+              <tr><td>改状态 / 一键转缺口 / 看榜单</td><td>要，且需管理员</td><td>运营动作。管理员 = 配置文件里的官方账号白名单，用户表里没有角色字段</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note sage">
+          <b>「可选登录」的边界要精确到具体路径。</b>配置里写的是 <code>/api/feedback</code> 本身，
+          而不是 <code>/api/feedback/**</code> —— 后者会把点赞、改状态、转缺口这些<b>深一层的路径</b>
+          一并放行，那些都是必须有身份的操作。同一条经验在知识库那边也有：
+          放行范围写成 <code>/**</code> 会把上传、删除一起放出去。
+        </div>
+
+        <h3>与知识缺口的关系</h3>
+        <p>
+          留言板里的「请求补充某民族某疾病」可以由管理员<b>一键转为知识缺口</b>，
+          于是它也成了缺口的一个来源。它既不是检索未命中、也不是对话里点出来的，
+          所以在缺口表上两个来源标记都是 0——界面上给它一个中性的徽标，
+          而不是硬塞进已有的两类里。
+        </p>
+        <p>
+          转缺口时需要的三个槽位由<b>前端</b>从反馈原文里识别后传上来
+          （复用前端那份民族 / 疾病词表），服务端不重新实现识别：
+          Java 侧没有这份词表，再写一份就是第 N 份拷贝——这个项目已经因为
+          「同一份词表多处维护、互不一致」吃过亏（服务端 NLU 的 7 个疾病里就没有「CKM」，而前端有）。
+        </p>
+      </section>
+
+      <footer>
+        <span>多民族特色医学智能体 · 产品概念原型</span>
+        <span>本页为技术参考文档，非最终交付物</span>
+      </footer>
+    </main>
+  </div>
+</div>

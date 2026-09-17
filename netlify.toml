@@ -1,0 +1,25 @@
+# Netlify 部署配置 —— 多民族医学智能体（Vue 前端）
+# 让 Netlify 构建 frontend（Vue3 + Vite）而不是根目录的静态 html。
+#
+# 关键点:
+#   base   = frontend     -> Netlify 在 frontend 目录里跑 npm run build
+#   publish = dist          -> 构建产物目录（Vite 输出到 frontend/dist）
+#   command = npm run build -> 构建命令
+#
+# 注意: AI 功能依赖后端 FastAPI 的 /api/* 接口。
+#       纯前端上线后 /api/* 会 404，需配合后端部署（见 README-DEPLOY.md）。
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# 强制使用满足 frontend 要求的 Node 版本（>=24.12.0）
+[build.environment]
+  NODE_VERSION = "24"
+
+# SPA 路由回退：/chat /kb /backend 等前端路由在刷新时交给 index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

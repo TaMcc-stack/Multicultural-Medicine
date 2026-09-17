@@ -1,0 +1,552 @@
+<title>多民族智能体 UI 规范</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#FBF6EF; --bg-deep:#F3EADD; --surface:#FFF;
+  --ink:#2B241D; --ink-2:#5C5348; --ink-3:#8A7F70;
+  --clay:#B85A36; --clay-deep:#9A4628; --clay-soft:#F4E2D6;
+  --sage:#3F6A58; --sage-deep:#305344; --sage-soft:#E4ECE2;
+  --amber:#B77E2A; --amber-soft:#F5E9CF;
+  --danger:#B2473A; --danger-soft:#F5E1DC;
+  --line:#E9DFD1; --line-2:#F0E8DC;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --serif:"Noto Serif SC","Songti SC","STSong",serif;
+  --mono:"JetBrains Mono",Consolas,monospace;
+  --r-xs:6px; --r-sm:10px; --r-md:14px; --r-lg:20px;
+  --sh-sm:0 1px 2px rgba(70,50,30,.04), 0 1px 3px rgba(70,50,30,.04);
+  --sh-md:0 4px 16px -6px rgba(70,50,30,.10), 0 2px 6px -2px rgba(70,50,30,.06);
+  --sh-lg:0 16px 40px -16px rgba(70,50,30,.16);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1B1613; --bg-deep:#241D18; --surface:#221C18;
+  --ink:#F0E7DC; --ink-2:#C3B6A6; --ink-3:#94897B;
+  --clay:#D9784F; --clay-deep:#E89372; --clay-soft:#3A251C;
+  --sage:#6FA98C; --sage-deep:#8CC0A4; --sage-soft:#1E2C25;
+  --amber:#D9A44C; --amber-soft:#322714;
+  --danger:#D9705F; --danger-soft:#3A211D;
+  --line:#362C24; --line-2:#2C241E;
+  --sh-sm:0 1px 2px rgba(0,0,0,.3); --sh-md:0 4px 16px -6px rgba(0,0,0,.5); --sh-lg:0 16px 40px -16px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#1B1613; --bg-deep:#241D18; --surface:#221C18;
+  --ink:#F0E7DC; --ink-2:#C3B6A6; --ink-3:#94897B;
+  --clay:#D9784F; --clay-deep:#E89372; --clay-soft:#3A251C;
+  --sage:#6FA98C; --sage-deep:#8CC0A4; --sage-soft:#1E2C25;
+  --amber:#D9A44C; --amber-soft:#322714;
+  --danger:#D9705F; --danger-soft:#3A211D;
+  --line:#362C24; --line-2:#2C241E;
+  --sh-sm:0 1px 2px rgba(0,0,0,.3); --sh-md:0 4px 16px -6px rgba(0,0,0,.5); --sh-lg:0 16px 40px -16px rgba(0,0,0,.6);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  font-size:15px;line-height:1.75;padding-inline:20px;padding-block:0 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto}
+header{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);font-weight:700}
+h1{font-size:clamp(26px,4vw,34px);font-weight:700;line-height:1.28;margin-top:10px;text-wrap:balance}
+.lede{color:var(--ink-2);margin-top:12px;max-width:64ch}
+section{padding-block:32px 8px}
+h2{font-size:19px;font-weight:700;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:16px;
+  display:flex;align-items:baseline;gap:10px}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--clay);font-weight:500}
+h3{font-size:15px;font-weight:700;margin:22px 0 8px}
+p{color:var(--ink-2);margin-bottom:10px}
+strong{color:var(--ink);font-weight:600}
+code{font-family:var(--mono);font-size:12.5px;color:var(--clay-deep);background:var(--clay-soft);padding:1px 6px;border-radius:4px}
+
+/* 诊断卡 */
+.diag{display:flex;flex-direction:column;gap:10px}
+.d-item{border:1px solid var(--line);border-left:3px solid var(--danger);background:var(--surface);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;padding:13px 16px}
+.d-item h4{font-size:14px;font-weight:700;margin-bottom:5px}
+.d-item p{font-size:13.5px;margin:0}
+.d-item .fix{display:block;margin-top:6px;font-size:12.5px;color:var(--sage-deep)}
+
+/* 落地状态标记 —— 本文档的方案已执行，每项标出实际结果 */
+.st{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;
+  padding:2px 9px;border-radius:999px;vertical-align:2px;margin-left:8px;white-space:nowrap}
+.st.done{background:var(--sage-soft);color:var(--sage-deep)}
+.st.part{background:var(--amber-soft);color:var(--amber)}
+.st.no{background:var(--danger-soft);color:var(--danger)}
+/* 方案里没写、但实际做进去的条目 */
+.d-item.ok{border-left-color:var(--sage)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--ink-3)}
+/* 结论 / 提示块（与 architecture.html 同款，两份文档观感一致） */
+.note{border-left:3px solid var(--sage);background:var(--sage-soft);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;padding:11px 15px;margin:14px 0;
+  font-size:13.5px;color:var(--ink-2)}
+.note b{color:var(--ink)}
+
+/* 字体对比 */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.cmp-box{border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px;background:var(--surface)}
+.cmp-box .tag{font-size:11.5px;font-weight:700;letter-spacing:.04em;margin-bottom:8px;display:block}
+.cmp-box.bad .tag{color:var(--danger)}
+.cmp-box.good .tag{color:var(--sage-deep)}
+.cmp-box .demo{font-size:21px;font-weight:700;line-height:1.4}
+.songti{font-family:SimSun,serif}
+.notosans{font-family:var(--sans)}
+
+/* 色板 */
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+.chip{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface)}
+.chip .c{height:52px}
+.chip .l{padding:7px 10px;font-size:11.5px;line-height:1.5}
+.chip .l b{display:block;font-weight:600;font-size:12.5px;color:var(--ink)}
+.chip .l span{font-family:var(--mono);color:var(--ink-3);font-size:11px}
+
+/* 字阶 */
+.type-row{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:baseline;
+  padding:9px 0;border-bottom:1px dashed var(--line-2)}
+.type-row:last-child{border-bottom:0}
+.type-meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.type-demo{color:var(--ink)}
+
+/* 圆角 / 阴影 */
+.demo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin-top:8px}
+.demo-cell{text-align:center}
+.demo-cell .box{height:66px;background:var(--surface);border:1px solid var(--line);margin-bottom:7px}
+.demo-cell .cap{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+
+/* 资源卡 */
+.res{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);
+  padding:14px 16px;margin-bottom:10px}
+.res .top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.res b{font-size:14.5px}
+.res .lic{font-family:var(--mono);font-size:11px;color:var(--sage-deep);background:var(--sage-soft);
+  border-radius:999px;padding:1px 8px}
+.res .repo{font-family:var(--mono);font-size:11.5px;color:var(--clay-deep)}
+.res p{font-size:13.5px;margin:7px 0 0}
+.res .why{color:var(--sage-deep)}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin-top:8px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line-2);vertical-align:top}
+thead th{background:var(--bg-deep);font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.now{color:var(--danger)} .to{color:var(--sage-deep);font-weight:600}
+
+footer{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
+@media(max-width:680px){.cmp{grid-template-columns:1fr}.type-row{grid-template-columns:1fr;gap:2px}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">多民族特色医学智能体 · 界面改造</div>
+  <h1>从「学术报告」到「知识社区」</h1>
+  <p class="lede">
+    这份规范基于对当前代码的实测——不是泛泛的设计建议。先列出三个可验证的问题（它们才是「像后台管理系统」的真正来源），
+    再给出可选的参考项目、逐页改造方向，以及一套收敛后的视觉变量。
+  </p>
+  <p class="lede" style="margin-top:10px">
+    <strong>方案已按此执行完毕。</strong>下方每一项都标了实际落地状态；文末另附「方案里没写、但实际做进去的」两块。
+    <span class="st done">已完成</span>
+    <span class="st part">部分完成</span>
+    <span class="st no">未采纳</span>
+  </p>
+</header>
+
+<!-- 1 诊断 -->
+<section>
+  <h2><span class="n">01</span>先诊断：三个实测问题</h2>
+  <p>改颜色、换圆角之前，这三条才是观感的决定性因素。</p>
+  <div class="diag">
+    <div class="d-item">
+      <h4>字体根本没加载 —— 标题实际渲染成「宋体」<span class="st done">已完成</span></h4>
+      <p>
+        <code>main.css</code> 声明了 <code>--serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun"</code>，
+        但<strong>全项目没有任何字体加载代码</strong>（0 个 <code>@font-face</code>、0 个 Google Fonts 引用、无 fontsource 依赖）。
+        本机没装 Noto Serif SC，于是回退到 <strong>SimSun（宋体）</strong>——屏幕上最老气的字体，也正是「像 Word 学术报告」的头号原因。
+      </p>
+      <span class="fix">→ 已解决：标题改用无衬线，<code>--serif</code> 直接指向 <code>--font-sans</code>。
+        同时决定<strong>不加载任何 web font</strong>——Google Fonts 在国内不稳，而系统中文字体本身就够用。</span>
+    </div>
+    <div class="d-item">
+      <h4>图标体系是混的 —— 16 个内联 SVG + 17 种 emoji<span class="st part">部分完成</span></h4>
+      <p>
+        🟢🟡🔴 表示证据充分度、👨‍⚕️ 表示行动建议、💬 表示追问、⚠️ 表示提醒……
+        Emoji 在不同系统渲染差异极大（Windows 是扁平彩色、macOS 是拟物），
+        而且<strong>彩色圆点在严肃医学语境下显得随意</strong>，同一屏里 SVG 线性图标和彩色 emoji 混排也不统一。
+      </p>
+      <span class="fix">→ 已删掉<strong>标题里的 emoji</strong>（👨‍⚕️ 专家行动建议、💬 您可能还想问、⚠️ 提醒），
+        改用文字层级本身表达结构。但<strong>Lucide 未引入</strong>：手写 SVG 仍在 17 处，
+        且 <code>stroke-width</code> 混用 1.4 / 2 / 2.2 / 2.4——这一项仍是待办。</span>
+    </div>
+    <div class="d-item">
+      <h4>设计变量没有纪律 —— <code>#a0522d</code> 和 <code>--clay</code> 是两个不同的棕色<span class="st done">已完成</span></h4>
+      <p>
+        实测：<strong>42 种硬编码色值出现 150 次</strong>（其中 <code>#a0522d</code> 用了 26 次，
+        而 token 里定义的主色是 <code>--clay: #B85A36</code>）。
+        另有 <strong>23 种字号</strong>、<strong>11 种圆角</strong>。
+        结果是「说不出的不统一」——每个局部看着都对，整页却没有整体感。
+      </p>
+      <span class="fix">→ 已解决：色值全部并入 token（42 种 → 3 种例外）、字号收敛到 8 档、圆角降到 5 档，
+        并补上了若干「被引用但从未定义」的 token（如 <code>--line-2</code>）。</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2 参考项目 -->
+<section>
+  <h2><span class="n">02</span>可借鉴的开源项目</h2>
+  <p>
+    按「改造成本从低到高」排序。你的技术栈是 Vue3 + Element Plus，所以优先列同生态的。
+    <strong>许可证都确认过</strong>——这几个都是宽松许可，可安全借鉴。
+  </p>
+  <div class="note" style="margin:12px 0 16px">
+    <b>最终结论：一个依赖都没引入，只借了模式。</b>
+    shadcn-vue 与 Nuxt UI 都要带进 Tailwind（Nuxt UI 还要 Reka UI），会和现有的
+    Element Plus + 手写 CSS 打架——Tailwind 的 preflight 重置尤其容易冲突，对当前规模收益远小于风险。
+    实际拿走的是：<b>token 纪律</b>（shadcn-vue 的语义成对、border 分层、圆角克制）、
+    <b>按钮权重分级</b>与「一屏只允许一个实心主按钮」（Nuxt UI 的设计指南）、
+    <b>长文排版</b>里「阅读宽度上限」的思路（Tailwind Typography）。
+  </div>
+
+  <div class="res">
+    <div class="top"><b>shadcn-vue</b><span class="lic">MIT</span><span class="repo">github.com/unovue/shadcn-vue</span></div>
+    <p>
+      不是组件库，是「把组件源码复制进你项目」的模式。你可以只拿 Card / Tabs / Dialog / Badge 几个，
+      按它的样式改，<strong>不需要整体迁移，也不需要动 Element Plus</strong>。
+      <span class="why">它的审美正是 Linear / Notion 那一挂——「知识社区」而不是「医疗软件」，和你的目标一致。</span>
+    </p>
+  </div>
+
+  <div class="res">
+    <div class="top"><b>Nuxt UI</b><span class="lic">MIT</span><span class="repo">github.com/nuxt/ui</span></div>
+    <p>
+      Vue 生态里「内容型产品」排版做得最舒服的一套。它的 landing 区和文档页排版可以直接借鉴你的<strong>首页</strong>与<strong>长文回答区</strong>。
+      是 Nuxt 模块，但组件底层基于 Reka UI，样式思路可移植。
+    </p>
+  </div>
+
+  <div class="res">
+    <div class="top"><b>@tailwindcss/typography</b><span class="lic">MIT</span><span class="repo">github.com/tailwindlabs/tailwindcss-typography</span></div>
+    <p>
+      <strong>单点杠杆最高的一个。</strong>它那套 <code>prose</code> 规则专门解决「长文怎么排才读得下去」——
+      正是你 AI 回答区块的痛点。即使不引 Tailwind，<strong>把它的 CSS 规则直接抄过来也完全可行</strong>。
+    </p>
+  </div>
+
+  <div class="res">
+    <div class="top"><b>Lucide</b><span class="lic">ISC</span><span class="repo">github.com/lucide-icons/lucide</span></div>
+    <p>
+      一套线性图标，Vue 包现在叫 <code>@lucide/vue</code>（早期名 <code>lucide-vue-next</code> 已弃用）。
+      风格克制统一，能一次性替掉现在混用的手写 SVG 和 emoji。ISC 许可比 MIT 还宽松。
+      图标规范：24×24 网格、<code>stroke-width="2"</code>、<code>stroke="currentColor"</code>。
+      <span class="why">仍是待办——见 01 的第二条。</span>
+    </p>
+  </div>
+
+  <div class="res">
+    <div class="top"><b>Arco Design Vue</b><span class="lic">MIT</span><span class="repo">github.com/arco-design/arco-design-vue</span></div>
+    <p>
+      字节出品。如果你哪天想彻底换掉 Element Plus，这是<strong>最低痛苦的选项</strong>（同样 Vue3 + TS，中文文档齐全）。
+      它的默认观感比 Element Plus 现代——Element Plus 的默认蓝 + 直角是「后台味」的主要来源。
+    </p>
+  </div>
+
+  <p style="margin-top:14px">
+    <strong>反面参考：</strong><code>vbenjs/vue-vben-admin</code>（MIT）。它是国内最流行的 Vue3 Admin 模板，
+    但它的审美正是你想避免的——深色侧栏 + 密集表格。值得看的是它的<strong>工程组织</strong>（主题切换、明暗模式、token 管理），不是它的视觉。
+  </p>
+</section>
+
+<!-- 3 视觉规范 -->
+<section>
+  <h2><span class="n">03</span>视觉规范</h2>
+
+  <h3>字体</h3>
+  <p>这是投入产出比最高的一项。同一个标题，两种字体：</p>
+  <div class="cmp">
+    <div class="cmp-box bad">
+      <span class="tag">✗ 现在实际渲染（宋体）</span>
+      <div class="demo songti">白族糖尿病患病率是多少？</div>
+    </div>
+    <div class="cmp-box good">
+      <span class="tag">✓ 改用无衬线</span>
+      <div class="demo notosans">白族糖尿病患病率是多少？</div>
+    </div>
+  </div>
+  <p>
+    <strong>决定：标题也改用无衬线，靠字重和字号做层级</strong>——Notion、Linear、知乎都是这么做的。
+    宋体在屏幕上（尤其小字号）天然显旧，这是「学术报告感」的主要来源。
+    <span class="st done">已完成</span>
+  </p>
+  <p style="font-size:13.5px">
+    同时决定<strong>不加载任何 web font</strong>：Google Fonts 在国内访问不稳，
+    而"PingFang SC / 微软雅黑 / Noto Sans SC"这套系统中文字体栈本身已经够用。
+    <code>--serif</code> 作为历史样式里大量使用的兼容名保留，但值已指向 <code>--font-sans</code>。
+  </p>
+
+  <h3>字阶：23 种 → 8 档</h3>
+  <div class="type-row"><span class="type-meta">11px / 400</span><span class="type-demo" style="font-size:11px">时间戳、计数等辅助信息</span></div>
+  <div class="type-row"><span class="type-meta">12px / 500</span><span class="type-demo" style="font-size:12px;font-weight:500">标签、次要说明</span></div>
+  <div class="type-row"><span class="type-meta">13px / 400</span><span class="type-demo" style="font-size:13px">卡片元信息、列表辅助行</span></div>
+  <div class="type-row"><span class="type-meta">14px / 400</span><span class="type-demo" style="font-size:14px">正文（列表项、表单）</span></div>
+  <div class="type-row"><span class="type-meta">15px / 400</span><span class="type-demo" style="font-size:15px">主要内容（回答正文）</span></div>
+  <div class="type-row"><span class="type-meta">17px / 700</span><span class="type-demo" style="font-size:17px;font-weight:700">卡片标题</span></div>
+  <div class="type-row"><span class="type-meta">22px / 700</span><span class="type-demo" style="font-size:22px;font-weight:700">区块标题</span></div>
+  <div class="type-row"><span class="type-meta">30px / 700</span><span class="type-demo" style="font-size:30px;font-weight:700">页面主标题</span></div>
+  <p style="margin-top:12px">
+    <strong>字重只用 3 档</strong>：400 正文 / 500 强调 / 700 标题。
+    现在 600 和 700 混用，视觉上分不出主次。<strong>行高</strong>：正文 1.75，标题 1.35。
+  </p>
+
+  <h3>色彩</h3>
+  <p>
+    你现在的骨架是好的——暖纸底 + 陶土红 + 鼠尾草绿，比「医疗蓝」有辨识度得多。
+    <strong>不用换色，只需要收敛</strong>：把 42 种硬编码色值全部并入下面这 15 个 token。
+  </p>
+  <div class="sw">
+    <div class="chip"><div class="c" style="background:#B85A36"></div><div class="l"><b>clay 主色</b><span>#B85A36</span></div></div>
+    <div class="chip"><div class="c" style="background:#9A4628"></div><div class="l"><b>clay-deep</b><span>#9A4628</span></div></div>
+    <div class="chip"><div class="c" style="background:#F4E2D6"></div><div class="l"><b>clay-soft</b><span>#F4E2D6</span></div></div>
+    <div class="chip"><div class="c" style="background:#3F6A58"></div><div class="l"><b>sage 辅色</b><span>#3F6A58</span></div></div>
+    <div class="chip"><div class="c" style="background:#E4ECE2"></div><div class="l"><b>sage-soft</b><span>#E4ECE2</span></div></div>
+    <div class="chip"><div class="c" style="background:#B77E2A"></div><div class="l"><b>amber 警示</b><span>#B77E2A</span></div></div>
+    <div class="chip"><div class="c" style="background:#B2473A"></div><div class="l"><b>danger</b><span>#B2473A</span></div></div>
+    <div class="chip"><div class="c" style="background:#2B241D"></div><div class="l"><b>ink 主文字</b><span>#2B241D</span></div></div>
+    <div class="chip"><div class="c" style="background:#5C5348"></div><div class="l"><b>ink-2 次要</b><span>#5C5348</span></div></div>
+    <div class="chip"><div class="c" style="background:#8A7F70"></div><div class="l"><b>ink-3 辅助</b><span>#8A7F70</span></div></div>
+    <div class="chip"><div class="c" style="background:#FBF6EF;border-bottom:1px solid var(--line)"></div><div class="l"><b>bg 暖纸底</b><span>#FBF6EF</span></div></div>
+    <div class="chip"><div class="c" style="background:#F3EADD"></div><div class="l"><b>bg-deep</b><span>#F3EADD</span></div></div>
+    <div class="chip"><div class="c" style="background:#FFFFFF;border-bottom:1px solid var(--line)"></div><div class="l"><b>surface 卡片</b><span>#FFFFFF</span></div></div>
+    <div class="chip"><div class="c" style="background:#E9DFD1"></div><div class="l"><b>line 描边</b><span>#E9DFD1</span></div></div>
+    <div class="chip"><div class="c" style="background:#F0E8DC"></div><div class="l"><b>line-2 弱分隔</b><span>#F0E8DC</span></div></div>
+  </div>
+  <p style="margin-top:12px">
+    <strong>一个必须做的决定</strong>：<code>#a0522d</code>（用了 26 次）和 <code>--clay: #B85A36</code> 是两个不同的棕色。
+    选一个——建议保留 <code>#B85A36</code>（更沉、更有质感），把 26 处硬编码全部替换掉。
+  </p>
+  <p style="font-size:13.5px">
+    语义色（成功/警告/危险）建议<strong>再降一点饱和度</strong>。医疗场景不适合高饱和的红绿——
+    现在的 <code>#B2473A</code> 已经是偏砖红的好选择，保持即可。
+  </p>
+
+  <h3>圆角：11 种 → 5 档</h3>
+  <div class="demo-grid">
+    <div class="demo-cell"><div class="box" style="border-radius:6px"></div><div class="cap">--r-xs 6px<br>标签 / chip</div></div>
+    <div class="demo-cell"><div class="box" style="border-radius:10px"></div><div class="cap">--r-sm 10px<br>输入框 / 小按钮</div></div>
+    <div class="demo-cell"><div class="box" style="border-radius:14px"></div><div class="cap">--r-md 14px<br>卡片</div></div>
+    <div class="demo-cell"><div class="box" style="border-radius:20px"></div><div class="cap">--r-lg 20px<br>弹窗 / 大容器</div></div>
+    <div class="demo-cell"><div class="box" style="border-radius:999px"></div><div class="cap">--r-full 999px<br>胶囊按钮</div></div>
+  </div>
+
+  <h3>阴影：更淡、更散</h3>
+  <p>
+    你现在的阴影偏硬（扩散小、透明度高）。知识类产品建议<strong>阴影更淡、靠边框和留白分层</strong>。
+    同一张卡片，三种深度：
+  </p>
+  <div class="demo-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+    <div class="demo-cell"><div class="box" style="box-shadow:var(--sh-sm)"></div><div class="cap">sh-sm · 静态卡片</div></div>
+    <div class="demo-cell"><div class="box" style="box-shadow:var(--sh-md)"></div><div class="cap">sh-md · hover 浮起</div></div>
+    <div class="demo-cell"><div class="box" style="box-shadow:var(--sh-lg)"></div><div class="cap">sh-lg · 弹窗 / 浮层</div></div>
+  </div>
+  <p style="font-size:13.5px;margin-top:10px">
+    关键差异：<strong>扩散半径大、透明度低</strong>（如 <code>0 4px 16px -6px rgba(70,50,30,.10)</code>），
+    看起来像「微微离开纸面」，而不是「贴了一张灰纸」。
+  </p>
+
+  <h3>间距：加一套 4px 基数</h3>
+  <p>
+    现在没有间距 token，padding/margin 全是手写的。建议加一套——这是让「留白合理」变得可执行的前提：
+  </p>
+  <div class="tbl-wrap" style="margin-top:8px">
+    <table>
+      <thead><tr><th>token</th><th>值</th><th>典型用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>--sp-1</code></td><td>4px</td><td>图标与文字之间</td></tr>
+        <tr><td><code>--sp-2</code></td><td>8px</td><td>标签之间、按钮内边距</td></tr>
+        <tr><td><code>--sp-3</code></td><td>12px</td><td>卡片内元素间距</td></tr>
+        <tr><td><code>--sp-4</code></td><td>16px</td><td>卡片内边距</td></tr>
+        <tr><td><code>--sp-5</code></td><td>20px</td><td>卡片之间</td></tr>
+        <tr><td><code>--sp-6</code></td><td>24px</td><td>区块内边距</td></tr>
+        <tr><td><code>--sp-8</code></td><td>32px</td><td>区块之间</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>按钮分级：约 40 个类名 → 5 档权重 <span class="st done">已完成</span></h3>
+  <p>
+    <strong>这一项不在原方案里</strong>，是执行过程中发现的最大一处重复：全站约 <strong>40 个各不相同的按钮类名</strong>、
+    60 处胶囊圆角；「危险」态重复实现过 4 遍（<code>.mini.danger</code> / <code>.act.danger</code> /
+    <code>.icon-btn.danger</code> / 各处的 <code>:disabled</code>），hover 行为也各不相同
+    （有的填成实心、有的只换边框色、有的还上浮 1px）。
+  </p>
+  <p>
+    参考 Nuxt UI 的 variant 体系，按<strong>视觉权重</strong>收敛成五档，全部定义在
+    <code>main.css</code> 的 <code>.btn</code> 下，视图只写布局、不再各自定义按钮：
+  </p>
+  <div class="tbl-wrap" style="margin-top:8px">
+    <table>
+      <thead><tr><th>档位</th><th>用途</th><th>典型</th></tr></thead>
+      <tbody>
+        <tr><td><code>.btn-solid</code></td><td>主操作，<strong>一屏只允许一个</strong></td><td>开始对话 / 发送 / 解析</td></tr>
+        <tr><td><code>.btn-outline</code></td><td>次要操作，以及并列的多个动作</td><td>追问胶囊 / 列表行操作</td></tr>
+        <tr><td><code>.btn-soft</code></td><td>标签式按钮、已选中的开关</td><td>新建对话 / 已收藏</td></tr>
+        <tr><td><code>.btn-ghost</code></td><td>图标按钮、行内动作</td><td>重命名 / 关闭</td></tr>
+        <tr><td><code>.btn-link</code></td><td>正文里的文字链接</td><td>空状态里的跳转</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px">
+    配尺寸（<code>btn-sm</code> / <code>btn-lg</code> / <code>btn-icon</code> / <code>btn-block</code> / <code>btn-rect</code>）、
+    语义色（<code>btn-danger</code> / <code>btn-sage</code>）与选中态（<code>is-on</code>）。
+    效果是<strong>每个视图只剩一个实心主按钮</strong>——此前智能对话页同屏有三个实心陶土红
+    （新建对话 / 发送 / 分享至动态）互相抢注意力，现在只有「发送」保持实心。
+  </p>
+
+  <h3>空状态：4 套 → 1 套 <span class="st done">已完成</span></h3>
+  <p>
+    同样是执行中补的。此前四处各写各的：动态页是「圆形插画 + 标题 + 说明 + 按钮」（最完整的一套），
+    个人中心和对话列表是光秃秃一行灰字，书架是一段虚线框文字。
+  </p>
+  <p>
+    现在统一成 <code>.empty-state</code> 四段结构（插画 → 标题 → 说明 → 行动，缺哪段就不渲染哪段），
+    配三档尺寸：默认（卡片内）/ <code>-sm</code>（行内、侧栏）/ <code>-lg</code>（整页）。
+    效果是<strong>每个空状态都能给出下一步</strong>，而不是「暂无数据」式的死胡同。
+  </p>
+</section>
+
+<!-- 4 逐页建议 -->
+<section>
+  <h2><span class="n">04</span>逐页改造：方案与结果</h2>
+  <p style="color:var(--ink-3);font-size:13.5px">
+    下表的「改造前 / 当时建议」是动手前记下的，保留原样以便对照；
+    每页标题旁的标记与下方说明才是实际结果。
+  </p>
+
+  <h3>首页 <span class="st part">方向调整</span></h3>
+  <div class="note">
+    <b>实际做法与建议不同。</b>建议的「问答预览式 Hero」「三种用法」没有采纳——改为保留大标题（字号收小一档、
+    上下留白加大）作为主视觉，下方新增<b>热门问题</b>模块：8 条真实高频问题平铺成卡片，点一下直达回答。
+    理由是「别人在问什么」比「我们能做什么」更容易让人迈出第一步。
+    两页之间靠 <code>/chat?q=&lt;问题&gt;</code> 打通，未登录时随 redirect 带到登录后再执行。
+  </div>
+  <p>
+    现在是「居中大标题 + 开始对话按钮 + 5 个价值点胶囊」——像产品发布会落地页。
+    但用户（尤其少数民族群众）是带着<strong>具体健康疑问</strong>来的，抽象的价值主张对他没有意义。
+  </p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>改造前</th><th>当时建议</th></tr></thead>
+      <tbody>
+        <tr><td class="now">抽象标题 + 自夸式能力标签</td><td class="to">用一段<strong>真实问答预览</strong>当主视觉——问题 + 通俗回答 + 一行依据来源。先给内容，再讲功能</td></tr>
+        <tr><td class="now">「问得准 / 找得到 / 说得清 / 有依据 / 知边界」</td><td class="to">改成用户视角的三种用法：「我想知道我们民族的常见病」「帮我看懂一份研究」「这些数据可靠吗」</td></tr>
+        <tr><td class="now">主按钮「开始对话」</td><td class="to">文案更具体：「问一个健康问题」</td></tr>
+        <tr><td class="now">无信任锚</td><td class="to">加一行来源说明：「已收录 N 篇已审核文献」——比「证据溯源」这种词有实感</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>智能对话页 <span class="st part">部分完成</span></h3>
+  <div class="note">
+    <b>已做：</b>依据文献默认收起成一个 chip；输入框圆角加大 + 聚焦光晕；
+    区块标题改成「小字号 + 主色 + 左侧短竖线」，层级交给颜色建立而不是字号堆叠。<br>
+    <b>未做：</b>追问胶囊仍在卡片内；左侧会话列表未加当前项色条。
+  </div>
+  <div class="note">
+    <b>另有几处不在方案内、但更影响体验的改动：</b>
+    <b>并发单飞锁</b>（一次只允许一个问题在跑）、<b>乐观更新</b>（点下发送就清空输入框并挂出提问气泡）、
+    <b>历史回放与实时回合合并成一条线程</b>。这三项解决的是答案串号、内容丢失、页面卡死，
+    比视觉调整重要得多——详见 <code>docs/architecture.html</code> 第 07 节。
+  </div>
+  <p>核心问题：<strong>一张回答卡片信息密度过高</strong>——核心解答 + 文献说明 + 行动建议 + 提醒 + 依据文献 + 追问胶囊 + 三个操作按钮，一屏装不下，读起来累。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>改造前</th><th>当时建议</th></tr></thead>
+      <tbody>
+        <tr><td class="now">所有模块视觉权重相同</td><td class="to"><strong>拉开主次</strong>：「专家核心解答」用 17px + 更多上下留白；其余模块 14px 浅色，让「先看结论」成为默认路径</td></tr>
+        <tr><td class="now">依据文献直接展示引用框</td><td class="to">默认收起成一个 chip（「依据《数据资料》4 条」），点开才展开——溯源可信但不压场</td></tr>
+        <tr><td class="now">追问胶囊在卡片内</td><td class="to">移到卡片<strong>外、下方留白处</strong>，视觉上「邀请继续问」而不是卡片的一个区块</td></tr>
+        <tr><td class="now">左侧列表纯文字</td><td class="to">当前会话加左侧色条；分组标题（今天/昨天）加字重，与条目标题拉开层级</td></tr>
+        <tr><td class="now">输入框普通直角</td><td class="to">圆角加大（--r-lg），聚焦时一圈柔和光晕（<code>box-shadow: 0 0 0 3px var(--clay-soft)</code>）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>动态页 <span class="st part">部分完成</span></h3>
+  <div class="note">
+    <b>已做：</b>卡片间距 18px → 20px；卡片圆角收到 14px（对齐 shadcn 的 <code>rounded-xl</code>）；
+    作者名与操作按钮<b>改为常驻显示</b>，作者名可点进个人主页。<br>
+    <b>与方案相反的一处，需要说明：</b>方案建议「列表行按钮改为 hover 才显形」，
+    实际改成了<b>常驻</b>。hover 门控会让触摸屏用户和不用鼠标的人根本发现不了「收藏」，
+    而那是这一页最核心的操作——<b>可发现性优先于「静态好扫读」</b>。个人中心的列表行同理。
+  </div>
+  <p>双列瀑布流 + 极简标题卡片，这个方向已经对了。只需微调呼吸感：</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>改造前</th><th>当时建议</th></tr></thead>
+      <tbody>
+        <tr><td class="now">卡片间距 18px</td><td class="to">20px，留白更透气</td></tr>
+        <tr><td class="now">标题 15.5px / 行高 1.5</td><td class="to">16px / 行高 1.6</td></tr>
+        <tr><td class="now">每张卡都有绿色标签块</td><td class="to">标签底色再淡一档，避免整页泛绿、视觉疲劳</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>个人中心 <span class="st part">部分完成</span></h3>
+  <div class="note">
+    <b>已做：</b>统计数字放大到 21px 并加字距，做出轻量仪表盘感；两张卡片的圆角与内边距统一；
+    「我的对话」行的三个动作按钮改用统一的分级样式。<br>
+    <b>未做：</b>列表行按钮改 hover 显形——理由同上，可发现性优先。<br>
+    <b>新增：</b>访客模式（<code>?userId=&lt;id&gt;</code>）——可查看他人的公开分享，
+    对话与收藏属私有数据不对外；有独立的一套只读资料区。
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>改造前</th><th>当时建议</th></tr></thead>
+      <tbody>
+        <tr><td class="now">统计数字与正文同字体</td><td class="to">数字用 22px + 字距微开，做成轻量「仪表盘」感</td></tr>
+        <tr><td class="now">列表行三个按钮常驻</td><td class="to">改为 hover 才显形（与动态页卡片一致），列表更静态、更好扫读</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>后台工作台 <span class="st done">已完成</span></h3>
+  <p style="color:var(--sage-deep);font-weight:500">
+    这一页<strong>本来就该「像后台」</strong>——它是给管理员看的溯源工具，信息密度是优点不是缺点。
+    不要为了统一审美牺牲它。只需统一色板和字体即可。
+  </p>
+</section>
+
+<!-- 5 优先级 -->
+<section>
+  <h2><span class="n">05</span>落地情况</h2>
+  <p>按当初定的优先级逐项核对，末尾三行是执行过程中另加的。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>优先级</th><th>做什么</th><th>状态</th><th>实际结果</th></tr></thead>
+      <tbody>
+        <tr><td><strong>P0</strong></td><td>处理字体</td><td><span class="st done">已完成</span></td><td>标题改无衬线；且决定不加载任何 web font（国内 Google Fonts 不稳）</td></tr>
+        <tr><td><strong>P0</strong></td><td>42 种硬编码色值并入 token</td><td><span class="st done">已完成</span></td><td>收敛到 3 种例外；顺带补上若干「被引用但从未定义」的 token</td></tr>
+        <tr><td>P1</td><td>引入 Lucide，替掉 emoji 图标</td><td><span class="st part">部分完成</span></td><td>标题里的 emoji 已删；<strong>Lucide 未引入</strong>，手写 SVG 仍 17 处、描边粗细仍混用</td></tr>
+        <tr><td>P1</td><td>加间距 token，字号收敛到 8 档</td><td><span class="st done">已完成</span></td><td>另补了圆角 5 档与字重 3 档的纪律</td></tr>
+        <tr><td>P2</td><td>对话页回答卡片的主次分层</td><td><span class="st done">已完成</span></td><td>区块标题改「小字号 + 主色 + 左竖线」；另修了并发与交互问题</td></tr>
+        <tr><td>P2</td><td>首页换成问答预览式 Hero</td><td><span class="st no">未采纳</span></td><td>改为「大标题 + 开始对话 + 热门问题」，见 04 首页</td></tr>
+        <tr><td>P3</td><td>参考 shadcn-vue 重做卡片 / 弹窗细节</td><td><span class="st done">已完成</span></td><td>只借 token 纪律与圆角/阴影/内边距规范，未引依赖</td></tr>
+        <tr><td>—</td><td><strong>按钮分级</strong>（方案外新增）</td><td><span class="st done">已完成</span></td><td>约 40 个类名 → 5 档权重；每视图只剩一个实心主按钮</td></tr>
+        <tr><td>—</td><td><strong>空状态统一</strong>（方案外新增）</td><td><span class="st done">已完成</span></td><td>4 套各写各的 → 1 套四段结构 + 三档尺寸</td></tr>
+        <tr><td>—</td><td><strong>前端并发与交互修复</strong>（方案外新增）</td><td><span class="st done">已完成</span></td><td>单飞锁 / 乐观更新 / 历史与实时合并成一条线程</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:14px">
+    <strong>回头看，P0 那两项判断是对的</strong>——它们改的是「每个字长什么样」和「每个颜色是不是同一个」，
+    加起来不到一天，却解决了「像学术报告」的大部分问题。
+  </p>
+  <p style="margin-top:10px">
+    但<strong>方案外的三项实际影响更大</strong>。按钮分级和空状态统一是把「各写各的」收敛成一套，
+    改完到处都变好；并发锁那三项则修掉了答案串号、内容丢失和页面卡死——
+    这些是方案里完全没预见到的，因为它们不属于视觉，而是流程本身的问题。
+  </p>
+</section>
+
+<footer>
+  基于 <code>frontend/src</code> 实际代码实测 · 色值/字号/圆角计数为全量统计 · 参考项目许可证均已核对<br>
+  文档已更新为「方案 + 落地结果」双层：01/03 为规范（现行），04/05 附实际执行状态。
+  技术实现细节见 <code>docs/architecture.html</code>。
+</footer>
+</div>
