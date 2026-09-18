@@ -128,6 +128,34 @@ cp frontend/.env.production.example frontend/.env.production
 | 纯 Netlify | 页面能打开，登录 / 提问 / 知识库全部 404 |
 | Netlify + 自建反代 | 把 `VITE_API_BASE` 指向反代地址即可 |
 
+### 关于 Vercel
+
+与 Netlify 同理：**只能托管静态文件，两个后端必须另想办法。**
+
+根目录的 `vercel.json` 已经把构建配置好了（Vercel 从**仓库根目录**构建，
+而前端在 `frontend/` 子目录里，不配置就会因为根目录没有 `index.html` 而返回
+`404 NOT_FOUND`）：
+
+| 字段 | 值 | 作用 |
+| --- | --- | --- |
+| `installCommand` | `cd frontend && npm ci` | 在 frontend/ 里装依赖 |
+| `buildCommand` | `cd frontend && npm run build` | 构建（含 vue-tsc 类型检查） |
+| `outputDirectory` | `frontend/dist` | Vite 产物目录 |
+| `rewrites` | `/((?!api/).*)` → `/index.html` | SPA 回退，`/chat` 刷新不 404 |
+
+**注意 `rewrites` 特意排除了 `/api/`**：否则接口 404 会被替换成一份 HTML，
+axios 拿到 HTML 解析失败，报错会变得很难懂。让 `/api/*` 老老实实返回 404，
+排查时打开 Network 一眼就能看出问题。
+
+> 若 Vercel 构建设置里把 **Root Directory 改成了 `frontend`**，根目录这份
+> `vercel.json` 会**被忽略**，SPA 回退随之失效（`/chat` 刷新会 404）。
+> 二选一：要么保持 Root Directory 为仓库根目录（推荐），要么把
+> `rewrites` 那段挪进 `frontend/vercel.json`。
+
+Node 版本由 Vercel 项目设置决定（Settings → General → Node.js Version），
+要求 `^22.18.0 || >=24.12.0`。构建报 node 版本错误时改这里。
+
+
 ---
 
 ## 五、验证清单
