@@ -13,6 +13,7 @@ from .services import llm
 from .services.answer import generate_answer, generate_fallback_answer, _refine_eth_text
 from .services.embeddings import embedding_engine
 from .services.evidence_extract import extract_evidences
+from .services.evidence_location import build_evidence_location
 from .services.field_extract import extract_rows
 from .services.expansion import expand_query
 from .services.kb import (Entry, citation_str, kb,
@@ -612,17 +613,20 @@ def _entry_to_evidence(e: Entry, understand: dict | None = None,
         doi = None
         url = None
     # 证据片段：聚焦到「疾病」关键词附近（避免锚定到同文档里的 CKM 等其他病数据），
-    # 并以完整句子输出（不断章取义）；最后把切片里的 markdown 表格转成可读纯文本
+    # 并以完整句子输出（不断章取义）；最后把切片里的 markdown 表格转成可读纯文本。
+    # raw 是聚焦后**未经清洗**的片段：与 full_text 同是 markdown 原文（只差空白格式），
+    # 用它算偏移才对得上全文；清洗后的 frag 只用于展示。
     terms = _anchor_groups(understand, question) if understand else None
     disease = (understand or {}).get("disease")
-    frag = (e.text or "").strip()
-    if len(frag) > 220:
-        frag = _focused_snippet(frag, terms, disease, (understand or {}).get("ethnicity"))
-    frag = _refine_eth_text(_clean_fragment(frag), (understand or {}).get("ethnicity"))
+    raw = (e.text or "").strip()
+    if len(raw) > 220:
+        raw = _focused_snippet(raw, terms, disease, (understand or {}).get("ethnicity"))
+    frag = _refine_eth_text(_clean_fragment(raw), (understand or {}).get("ethnicity"))
     # 原文定位：算出片段在文档全文里的字符区间，前端据此「点片段 → 弹原文并高亮」。
     # 只对知识库文档切片有意义（论文证据没有本地全文），拿不到全文时返回 -1。
     # KV 合成证据的 frag 是包装过的文本，原文里搜不到，改用它的来源切片定位。
     start, end = -1, -1
+    full_text = ""
     if e.doc_id is not None:
         full_text = kb.get_document_full_text(e.doc_id)
         if not full_text:
@@ -634,9 +638,18 @@ def _entry_to_evidence(e: Entry, understand: dict | None = None,
             # KV 证据：收紧到它对应的那张表，避免把同切片里的其他表一起高亮
             start, end = _kv_locate_span(full_text, e.source_text, eth, dis)
         if start < 0:
-            target = (e.source_text or "").strip() or frag
+            target = (e.source_text or "").strip() or raw
             start, end = _compute_snippet_offsets(full_text, target)
-    return {
+    location = build_evidence_location(
+        (e.source_text or "").strip() or (e.text or ""),
+        raw,
+        terms=terms or [],
+        understand=understand or {},
+        full_text=full_text,
+        start_offset=start,
+        section_hint=e.section,
+    )
+    result = {
         "id": str(e.doc_id) if e.doc_id is not None else "",
         "title": e.doc_title or "来源资料",
         "fragment": frag,
@@ -656,6 +669,8 @@ def _entry_to_evidence(e: Entry, understand: dict | None = None,
         # 知识库分区：raw 的条目在溯源时该展示 PDF 原文，integrated 的展示文档片段
         "partition": e.partition,
     }
+    result.update(location)
+    return result
 
 
 def _entry_to_candidate(e: Entry, understand: dict | None = None,
@@ -666,8 +681,16 @@ def _entry_to_candidate(e: Entry, understand: dict | None = None,
     frag = (e.text or "").strip()
     if len(frag) > 220:
         frag = _focused_snippet(frag, terms, disease, (understand or {}).get("ethnicity"))
-    frag = _refine_eth_text(_clean_fragment(frag), (understand or {}).get("ethnicity"))
-    return {
+    raw = frag
+    frag = _refine_eth_text(_clean_fragment(raw), (understand or {}).get("ethnicity"))
+    location = build_evidence_location(
+        e.text or "",
+        raw,
+        terms=terms or [],
+        understand=understand or {},
+        section_hint=e.section,
+    )
+    result = {
         "source": source,
         "id": str(e.doc_id) if e.doc_id is not None else "",
         "title": e.doc_title or "",
@@ -680,6 +703,8 @@ def _entry_to_candidate(e: Entry, understand: dict | None = None,
         "partition": e.partition,
         "evidence": [{"topic": e.topic, "fragment": frag}],
     }
+    result["evidence"][0].update(location)
+    return result
 
 
 # 注意：prevalence 的统一中文是「患病情况」（与前端 INTENT_LABELS 一致）。
@@ -1225,22 +1250,36 @@ async def understand_frontend(req: UnderstandRequest):
 
 
 def _compute_snippet_offsets(full_text: str, snippet_text: str) -> tuple[int, int]:
-    """在 full_text 中定位 snippet_text 的字符偏移；支持清洗后片段的模糊匹配。"""
+    """在 full_text 中定位 snippet_text 的字符偏移。
+
+    三层匹配：
+      1. 精确匹配；
+      2. 空白弹性匹配——Java 摄取切片（KbService.splitByParagraph）用「空格」把行拼成
+         单行，而 full_text 保留换行/空行。把 snippet 里的空白段当作 `\\s+` 在全文里搜，
+         既对得上「单行切片 vs 多行全文」，又不抹掉 | # 等排版符号（避免定位到别的表）；
+      3. 归一化匹配兜底（去空白与排版符号），应对片段被 _clean_fragment 改写的场景。
+    """
     if not full_text or not snippet_text:
         return -1, -1
     # 优先精确匹配
     idx = full_text.find(snippet_text)
     if idx != -1:
         return idx, idx + len(snippet_text)
-    # fallback 1：取 snippet 前 20 个字符做前缀匹配（应对片段被 _clean_fragment 改写的情况）
+    # 空白弹性匹配：把 snippet 的每个空白连续段替换成 \s+，其余部分字面匹配，
+    # 用 re.search 直接拿到原文坐标（空白段外的字符与原文一一对应）。
+    parts = re.split(r"(\s+)", snippet_text)
+    pat = "".join(r"\s+" if (p and p.isspace()) else re.escape(p) for p in parts if p)
+    m = re.search(pat, full_text)
+    if m:
+        return m.start(), m.end()
+    # 20 字前缀兜底
     prefix = snippet_text[:20] if len(snippet_text) >= 20 else snippet_text
     idx = full_text.find(prefix)
     if idx != -1:
         end = idx + len(snippet_text)
-        # 确保 end 不越界
         return idx, min(end, len(full_text))
-    # fallback 2：归一化匹配——去掉空白与排版符号（| # / ： ； 等）后按内容字符匹配，
-    # 并把归一化位置映射回原文位置。应对 markdown 表格被改写成可读文本的场景。
+    # 归一化匹配兜底：去掉空白与排版符号（| # / ： ； 等）后按内容字符匹配，
+    # 并把归一化位置映射回原文位置。
     _DROP = set(" \t\r\n|#/：:；;，,。、*—-")
     norm_full, idx_map = [], []
     for i, ch in enumerate(full_text):
@@ -1300,13 +1339,15 @@ def _build_candidates(entries: list, understand: dict, question: str = "") -> li
             # 把含「发病率」的乙肝/药动学切片当成证据片段列在右侧误导用户
             if not _intent_relevant(e, understand):
                 continue
-            frag = (e.text or "").strip()
-            if len(frag) > 220:
-                frag = _focused_snippet(frag, terms, (understand or {}).get("disease"),
-                                        (understand or {}).get("ethnicity"))
-            frag = _refine_eth_text(_clean_fragment(frag), (understand or {}).get("ethnicity"))
-            start, end = _compute_snippet_offsets(full_text, frag)
-            evidences.append({
+            # 偏移量用「清洗前」的聚焦片段 raw 去全文里定位：raw 与 full_text 同是
+            # markdown 原文（只差空白格式），清洗后的 frag 只用于右栏展示。
+            raw = (e.text or "").strip()
+            if len(raw) > 220:
+                raw = _focused_snippet(raw, terms, (understand or {}).get("disease"),
+                                       (understand or {}).get("ethnicity"))
+            frag = _refine_eth_text(_clean_fragment(raw), (understand or {}).get("ethnicity"))
+            start, end = _compute_snippet_offsets(full_text, raw)
+            evidence = {
                 "topic": e.topic,
                 "fragment": frag,
                 "startOffset": start,
@@ -1314,7 +1355,17 @@ def _build_candidates(entries: list, understand: dict, question: str = "") -> li
                 # 命中的关键词：前端在片段里标出来，说明「为什么这条被检索到」
                 "matchedTerms": _matched_terms(terms, frag),
                 "page": e.page_no,
-            })
+            }
+            evidence.update(build_evidence_location(
+                e.text or "",
+                raw,
+                terms=terms or [],
+                understand=understand or {},
+                full_text=full_text,
+                start_offset=start,
+                section_hint=e.section,
+            ))
+            evidences.append(evidence)
         # 状态判定（三级）：
         # - 文档完全不含问题疾病（完整词+二元组）→ none（被扫描过，但无直接证据）
         # - 含疾病但无该意图的强相关片段 → partial（提到疾病，但无此方面证据）

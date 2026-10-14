@@ -55,7 +55,7 @@ function handleCommand(cmd: string) {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </span>
-        <span class="brand-name">多民族特色医学智能体</span>
+        <span class="brand-name">多民族特色医学智能问答系统</span>
         <span class="brand-sub">· 精准用药问答</span>
       </div>
 

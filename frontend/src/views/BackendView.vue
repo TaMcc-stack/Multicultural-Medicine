@@ -983,7 +983,7 @@ function reset() {
 
     <footer class="footer">
       <div class="wrap">
-        <span class="foot-brand">多民族特色医学智能体</span>
+        <span class="foot-brand">多民族特色医学智能问答系统</span>
         <span class="foot-note">产品概念原型 · 演示数据</span>
       </div>
     </footer>

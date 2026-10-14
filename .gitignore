@@ -34,6 +34,10 @@ build/
 .vscode/
 *.iml
 .workbuddy/
+.codex/
+
+# --- 未申报专利构思（公开仓库不得泄露，影响新颖性）---
+patent-output/
 
 # --- OS ---
 .DS_Store

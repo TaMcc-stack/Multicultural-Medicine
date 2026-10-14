@@ -36,6 +36,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -667,7 +669,15 @@ public class KbService {
                 "SELECT * FROM kb_document WHERE id = ?", ROW_MAPPER_WITH_CONTENT, id);
         if (cur.isEmpty()) throw new IllegalStateException("文档不存在");
         KbDocDto d = cur.get(0);
-        Path file = Paths.get(storageDir, d.getFileName());
+        // 磁盘上的实际文件名是 stored_name（id_标题.扩展名），不是展示用的 original_name。
+        // 用 d.getFileName() 会找成 kb_data/数据资料.docx，永远命中不了——这里必须查 stored_name。
+        List<String> storedNames = jdbcTemplate.query(
+                "SELECT stored_name FROM kb_document WHERE id = ?",
+                (rs, rowNum) -> rs.getString("stored_name"), id);
+        if (storedNames.isEmpty() || storedNames.get(0) == null || storedNames.get(0).isBlank()) {
+            throw new IllegalStateException("原始文件记录缺失，无法重新解析");
+        }
+        Path file = Paths.get(storageDir, storedNames.get(0));
         if (!Files.exists(file)) {
             throw new IllegalStateException("原始文件已不在存储目录，无法重新解析");
         }
@@ -1067,9 +1077,50 @@ public class KbService {
         }
     }
 
+    /** Markdown 标题行：1~6 个 # + 空格 + 标题（与前端解析器同一条判据）。 */
+    private static final Pattern MD_HEADING = Pattern.compile("^(#{1,6})\\s+(.+?)\\s*$");
+
+    /** 一个「节」：从顶级到当前的标题路径；body 是该节正文（含标题行本身）。 */
+    private record SectionText(String path, String body) {
+    }
+
+    /**
+     * 按 Markdown 标题把文本切成「节」，每节保留自己的标题路径。
+     *
+     * <p>为什么必须按标题切：原来的切片只按 600 字聚合段落、不看标题，一个切片会横跨两节——
+     * 《数据资料》里「各民族特异性危险因素」那段和「2、糖尿病」整节被塞进同一个切片，
+     * 检索命中后根本判断不出用户问的是哪一节（实测「白族 + 高血压 + 危险因素」被定位到了
+     * 糖尿病那一节）。先按标题切节、节内再按字数聚合，切片就不会跨节；标题路径同时写进
+     * 切片的 section 字段，供检索定位回退使用。</p>
+     */
+    private static List<SectionText> splitByHeadings(String text) {
+        List<SectionText> out = new ArrayList<>();
+        if (text == null || text.isBlank()) return out;
+        List<String> stack = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        String curPath = "";
+        for (String raw : text.split("\n", -1)) {
+            String line = raw.trim();
+            Matcher m = MD_HEADING.matcher(line);
+            if (m.matches()) {
+                if (cur.length() > 0) {
+                    out.add(new SectionText(curPath, cur.toString().trim()));
+                    cur.setLength(0);
+                }
+                int level = m.group(1).length();
+                while (stack.size() >= level) stack.remove(stack.size() - 1);
+                stack.add(m.group(2).trim());
+                curPath = String.join(" > ", stack);
+            }
+            cur.append(line).append('\n');
+        }
+        if (cur.length() > 0) out.add(new SectionText(curPath, cur.toString().trim()));
+        return out;
+    }
+
     /** 把整份文本拆成小切片（保留页号），供推送到 AI 服务检索索引。
-     *  PDF 按页分隔符切页；每页/每篇再按段落聚合成约 targetLen 字符的切片，
-     *  避免把整篇/整页当成一个证据「整篇搬过来」。 */
+     *  PDF 按页分隔符切页；每页先按 Markdown 标题切成节，节内再按段落聚合成约 600 字符的切片，
+     *  避免把整篇/整页当成一个证据「整篇搬过来」，也避免切片横跨两节。 */
     private List<Map<String, Object>> splitChunks(String textWithPages) {
         List<Map<String, Object>> chunks = new ArrayList<>();
         if (textWithPages == null || textWithPages.isBlank()) return chunks;
@@ -1078,14 +1129,16 @@ public class KbService {
         for (String pageText : pages) {
             String pt = pageText.trim();
             if (!pt.isEmpty()) {
-                for (String piece : splitByParagraph(pt, 600)) {
-                    if (piece.isEmpty()) continue;
-                    Map<String, Object> ch = new LinkedHashMap<>();
-                    ch.put("index", chunks.size());
-                    ch.put("pageNo", pageNo);
-                    ch.put("section", null);
-                    ch.put("content", piece);
-                    chunks.add(ch);
+                for (SectionText section : splitByHeadings(pt)) {
+                    for (String piece : splitByParagraph(section.body(), 600)) {
+                        if (piece.isEmpty()) continue;
+                        Map<String, Object> ch = new LinkedHashMap<>();
+                        ch.put("index", chunks.size());
+                        ch.put("pageNo", pageNo);
+                        ch.put("section", section.path().isEmpty() ? null : section.path());
+                        ch.put("content", piece);
+                        chunks.add(ch);
+                    }
                 }
             }
             pageNo++;

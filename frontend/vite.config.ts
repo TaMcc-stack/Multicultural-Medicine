@@ -33,7 +33,22 @@ function apiProxy(target: string): ProxyOptions {
     target,
     changeOrigin: true,
     configure(proxy) {
-      proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'))
+      proxy.on('proxyReq', (proxyReq, req) => {
+        proxyReq.removeHeader('origin')
+
+        // 把前端的自定义头还原成后端认的 `Authorization`。
+        //
+        // 前端改用 `X-Auth-Token` 是为了绕开魔搭创空间边缘网关 —— 那层网关
+        // 会把带 `Authorization` 的请求当成平台自己的 SDK Token 截胡，后端
+        // 永远收不到（详见 src/api/request.ts 的拦截器注释）。
+        //
+        // 线上由 deploy/modelscope/nginx.conf 做同一件事；这里补上是为了
+        // 本地 dev / preview 也能跑通 —— 本地走 vite proxy，不经过 nginx。
+        const token = req.headers['x-auth-token']
+        if (token) {
+          proxyReq.setHeader('authorization', token as string)
+        }
+      })
     },
   }
 }

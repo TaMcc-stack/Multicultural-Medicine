@@ -34,6 +34,11 @@ public final class TextExtractor {
             // 只匹配 <w:t> 或 <w:t 属性...>；禁止匹配 <w:tbl*>、<w:top>、<w:tab> 等（避免表格 XML 泄漏进正文）
             Pattern.compile("<w:t(?:\\s[^>]*)?>(.*?)</w:t>", Pattern.DOTALL);
 
+    /** 内联文本、制表符和换行符；用于识别用 Tab 对齐的普通段落。 */
+    private static final Pattern P_INLINE_TOKEN = Pattern.compile(
+            "<w:t(?:\\s[^>]*)?>(.*?)</w:t>|<w:tab(?:\\s[^>]*)?\\s*/>|<w:br(?:\\s[^>]*)?\\s*/>",
+            Pattern.DOTALL);
+
     // ---- docx 结构保真：段落 <w:p> / 表格 <w:tbl>，行 <w:tr> / 单元格 <w:tc> ----
     private static final Pattern P_OPEN_P = Pattern.compile("<w:p(?:\\s[^>]*)?>", Pattern.DOTALL);
     private static final Pattern P_OPEN_TBL = Pattern.compile("<w:tbl(?:\\s[^>]*)?>", Pattern.DOTALL);
@@ -295,6 +300,41 @@ public final class TextExtractor {
                 String md = tableToMarkdown(block);
                 if (!md.trim().isEmpty()) blocks.add(md);
             } else {
+                // Word 里常见的“Tab 对齐表格”仍是普通段落。先保留 Tab 探测连续段落，
+                // 只有整组满足严格表格特征时才转 Markdown；否则继续走原来的普通段落逻辑。
+                String tabRaw = inlineTextKeepingTabs(block);
+                String tabLine = tabRaw.trim();
+                // 行首 Tab 当缩进的段落不参与识别：它和「标签\t数值」的表头长得一样，
+                // trim 之后无法区分，所以这一步必须看未 trim 的原文。
+                if (tabLine.indexOf('\t') >= 0 && !startsWithIndentTab(tabRaw)) {
+                    List<String> group = new ArrayList<>();
+                    List<Integer> groupEnds = new ArrayList<>();
+                    group.add(tabLine);
+                    groupEnds.add(end);
+
+                    int scanFrom = end;
+                    while (true) {
+                        int nextP = nextOpen(xml, scanFrom, P_OPEN_P);
+                        int nextTbl = nextOpen(xml, scanFrom, P_OPEN_TBL);
+                        if (nextP < 0 || (nextTbl >= 0 && nextTbl < nextP)) break;
+                        int nextEnd = findParaEnd(xml, nextP);
+                        if (nextEnd < 0) break;
+                        String nextRaw = inlineTextKeepingTabs(xml.substring(nextP, nextEnd));
+                        String nextLine = nextRaw.trim();
+                        if (nextLine.indexOf('\t') < 0 || startsWithIndentTab(nextRaw)) break;
+                        group.add(nextLine);
+                        groupEnds.add(nextEnd);
+                        scanFrom = nextEnd;
+                    }
+
+                    TabTableResult table = tabRowsToMarkdown(group);
+                    if (table != null) {
+                        blocks.add(table.markdown);
+                        i = groupEnds.get(table.consumedRows - 1);
+                        continue;
+                    }
+                }
+
                 String line = inlineText(block).trim();
                 if (!line.isEmpty()) {
                     int lvl = detectHeadingLevel(line, pStyleOf(block));
@@ -469,6 +509,121 @@ public final class TextExtractor {
         Matcher m = P_WT.matcher(block);
         while (m.find()) line.append(m.group(1));
         return unescapeXml(line.toString()).trim();
+    }
+
+    /** 行首（允许前导普通空格）是 Tab，说明这个 Tab 是缩进而不是列分隔。 */
+    private static boolean startsWithIndentTab(String raw) {
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (c == ' ' || c == '\u00a0' || c == '\u3000') continue;
+            return c == '\t';
+        }
+        return false;
+    }
+
+    /** 段落内联文本：按 XML 顺序保留 <w:tab/> 为制表符、<w:br/> 为换行符。 */
+    private static String inlineTextKeepingTabs(String block) {
+        StringBuilder line = new StringBuilder();
+        Matcher m = P_INLINE_TOKEN.matcher(block);
+        while (m.find()) {
+            String token = m.group();
+            if (m.group(1) != null) {
+                line.append(m.group(1));
+            } else if (token.startsWith("<w:tab")) {
+                line.append('\t');
+            } else if (token.startsWith("<w:br")) {
+                line.append('\n');
+            }
+        }
+        // 故意不 trim：行首 Tab 是「缩进」还是「列分隔」要靠未 trim 的原文判断
+        return unescapeXml(line.toString());
+    }
+
+    /** Tab 对齐段落的转换结果：Markdown 文本 + 实际消耗的段落数。 */
+    private static final class TabTableResult {
+        final String markdown;
+        final int consumedRows;
+
+        TabTableResult(String markdown, int consumedRows) {
+            this.markdown = markdown;
+            this.consumedRows = consumedRows;
+        }
+    }
+
+    /**
+     * 将连续的 Tab 对齐段落转换为 Markdown 表格。
+     * 只采用最长的、能通过严格结构校验的前缀；否则返回 null，保留原文。
+     */
+    private static TabTableResult tabRowsToMarkdown(List<String> lines) {
+        List<List<String>> rows = new ArrayList<>();
+        for (String line : lines) {
+            List<String> cells = new ArrayList<>();
+            for (String raw : line.split("\t", -1)) {
+                String cell = raw.trim();
+                if (!cell.isEmpty()) cells.add(cell);
+            }
+            rows.add(cells);
+        }
+
+        for (int count = rows.size(); count >= 3; count--) {
+            List<List<String>> prefix = rows.subList(0, count);
+            if (!isTabTable(prefix)) continue;
+
+            StringBuilder md = new StringBuilder();
+            md.append('|');
+            for (String c : prefix.get(0)) md.append(' ').append(c).append(" |");
+            md.append('\n');
+            md.append('|');
+            for (int k = 0; k < prefix.get(0).size(); k++) md.append(" --- |");
+            md.append('\n');
+            for (int r = 1; r < prefix.size(); r++) {
+                md.append('|');
+                for (String c : prefix.get(r)) md.append(' ').append(c).append(" |");
+                md.append('\n');
+            }
+            return new TabTableResult(md.toString(), count);
+        }
+        return null;
+    }
+
+    /** 校验 Tab 对齐段落是否具备可可靠转换成表格的结构特征。 */
+    private static boolean isTabTable(List<List<String>> rows) {
+        if (rows.size() < 3) return false;
+        int cols = rows.get(0).size();
+        if (cols < 2) return false;
+        for (List<String> row : rows) {
+            if (row.size() != cols) return false;
+        }
+        for (String header : rows.get(0)) {
+            if (header.length() > 24 || containsHeaderPunctuation(header)) return false;
+        }
+        for (int r = 1; r < rows.size(); r++) {
+            boolean hasDigit = false;
+            for (String cell : rows.get(r)) {
+                for (int k = 0; k < cell.length(); k++) {
+                    if (Character.isDigit(cell.charAt(k))) {
+                        hasDigit = true;
+                        break;
+                    }
+                }
+                if (hasDigit) break;
+            }
+            if (!hasDigit) return false;
+        }
+        return true;
+    }
+
+    /** 表头不得带句读或冒号，避免把普通正文误判成表格。 */
+    private static boolean containsHeaderPunctuation(String text) {
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '。' || c == '！' || c == '？' || c == '；' || c == '，'
+                    || c == '、' || c == '：' || c == ':'
+                    || c == '.' || c == ',' || c == ';' || c == '!' || c == '?') {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 单元格文本：一个 <w:tc> 内可能有多个段落，用空格连接 */

@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import AppTopbar from '@/components/AppTopbar.vue'
+import DocumentStructureView from '@/components/DocumentStructureView.vue'
 import SourceBadge from '@/components/SourceBadge.vue'
 import { useUserStore } from '@/stores/user'
 import { fetchPapers, type Paper } from '@/api/qa'
@@ -605,6 +606,8 @@ const viewingReading = ref(false) // false=基本信息卡；true=已展开全�
 const viewingText = ref('')
 const viewingLoading = ref(false)
 const viewError = ref('')
+/** 「资料结构」整屏页是否展开（与阅读视图共用同一份 viewingText） */
+const structureVisible = ref(false)
 
 /** 是否有可展示的自动识别元数据 */
 function hasMeta(l: LiteratureItem | null): boolean {
@@ -619,9 +622,11 @@ async function openViewer(l: LiteratureItem) {
   viewingText.value = ''
   viewError.value = ''
 }
-async function startReading() {
+/** 拉取/复用当前文献正文——阅读视图与「资料结构」共用同一份文本 */
+async function loadViewingText(): Promise<boolean> {
   const l = viewing.value
-  if (!l) return
+  if (!l) return false
+  if (viewingText.value) return true
   viewingLoading.value = true
   viewError.value = ''
   try {
@@ -631,17 +636,31 @@ async function startReading() {
       const d = await getKbDoc(l.kbId)
       viewingText.value = d.content || '（未能提取到正文内容）'
     }
-    viewingReading.value = true
+    return true
   } catch {
     viewError.value = '加载正文失败，请稍后重试'
+    return false
   } finally {
     viewingLoading.value = false
   }
+}
+async function startReading() {
+  if (await loadViewingText()) viewingReading.value = true
+}
+/** 打开「资料结构」：先确保正文到位，再展开整屏结构页 */
+async function openStructure() {
+  if (await loadViewingText()) {
+    structureVisible.value = true
+    return
+  }
+  // 结构页依赖正文；加载失败时详情卡上不显示 viewError，这里补一条即时反馈
+  ElMessage.error(viewError.value || '加载正文失败，请稍后重试')
 }
 function closeViewer() {
   viewerVisible.value = false
   viewing.value = null
   viewingReading.value = false
+  structureVisible.value = false
 }
 
 // ---------- 阅读内容分块（段落 + Markdown 表格，避免 v-html 的 XSS 风险） ----------
@@ -892,7 +911,7 @@ onMounted(() => {
 
     <footer class="footer">
       <div class="wrap">
-        <span class="foot-brand">多民族特色医学智能体</span>
+        <span class="foot-brand">多民族特色医学智能问答系统</span>
         <span class="foot-note">产品概念原型 · 演示数据</span>
       </div>
     </footer>
@@ -1041,6 +1060,16 @@ onMounted(() => {
 
           <!-- 右下角：开始阅读 -->
           <div class="detail-read">
+            <!-- 椭圆描边按钮：「开始阅读」左侧，进入按标题切分的资料结构页 -->
+            <button
+              v-if="!isPdfReader"
+              class="btn btn-outline structure-btn"
+              type="button"
+              :disabled="viewingLoading"
+              @click="openStructure"
+            >
+              资料结构
+            </button>
             <button class="btn btn-solid read-btn" type="button" :disabled="viewingLoading" @click="startReading">
               {{ viewingLoading ? '正在加载…' : '开始阅读' }}
             </button>
@@ -1114,6 +1143,14 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 资料结构：按 Markdown 标题递归切分后的整屏结构页（独立于阅读弹窗） -->
+    <DocumentStructureView
+      v-if="structureVisible && viewing"
+      :title="viewing.title"
+      :blocks="contentBlocks"
+      @close="structureVisible = false"
+    />
 
     <!-- toast -->
     <transition name="fade">
@@ -1331,8 +1368,9 @@ onMounted(() => {
 .meta-row dt { flex: none; width: 56px; color: var(--ink-3); font-weight: 500; }
 .meta-row dd { margin: 0; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
 .detail-empty { color: var(--ink-3); font-size: 13.5px; padding: 8px 2px; }
-.detail-read { margin-top: 20px; display: flex; justify-content: flex-end; }
+.detail-read { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
 .read-btn { min-width: 148px; padding: 11px 26px; font-size: 15px; }
+.structure-btn { min-width: 148px; padding: 11px 26px; font-size: 15px; }
 
 /* ---------- 选择文件大方框 ---------- */
 .pick-box {

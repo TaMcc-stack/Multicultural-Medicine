@@ -9,11 +9,15 @@ import AppTopbar from '@/components/AppTopbar.vue'
 /** 等待检索时的三步进度。与智能对话页共用同一个组件，保证两个入口样式一致 */
 import AnswerProgress from '@/components/AnswerProgress.vue'
 import DocEvidenceViewer from '@/components/DocEvidenceViewer.vue'
+import DocumentStructureView from '@/components/DocumentStructureView.vue'
 import SourceBadge from '@/components/SourceBadge.vue'
-import { getKbVocab } from '@/api/kb'
+import { getKbDoc, getKbVocab, listKbDocs } from '@/api/kb'
+import type { KbDoc } from '@/api/kb'
 import { ETHNICS, DISEASES } from '@/utils/medicalVocab'
 import { INTENT_LABELS, evidencePool, generate, fetchDocFullText } from '@/api/qa'
 import type { EvidencePoolResult, GenerateAnswer, GenerateResult, IntentCode, PoolEvidence, RetrieveResult } from '@/api/qa'
+import { parseContentBlocks } from '@/utils/contentBlocks'
+import type { ContentBlock } from '@/utils/contentBlocks'
 import {
   deleteSearchHistory,
   listSearchHistory,
@@ -31,6 +35,19 @@ import { highlightTerms } from '@/utils/highlight'
 import { packQaCard } from '@/utils/shareConversation'
 import type { ShareCitation, ShareTurn } from '@/utils/shareConversation'
 import { publishQaCard } from '@/api/dynamic'
+
+/**
+ * PoolEvidence 的结构化定位字段由后端并行补齐；这里先做局部扩展，
+ * 保证前端在后端字段尚未合并进 qa.ts 类型时也能消费，老数据仍按原 offset 弹窗降级。
+ */
+type StructuredPoolEvidence = PoolEvidence & {
+  sectionPath?: string[]
+  targetType?: 'section' | 'text' | 'table_row' | 'table_cell'
+  rowKey?: string
+  colKey?: string
+  highlightFields?: string[]
+  anchorText?: string
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -527,7 +544,21 @@ function canLocate(e: PoolEvidence): boolean {
   return !!e.id && e.startOffset != null && e.startOffset >= 0 && e.endOffset != null
 }
 
-const locatableCount = computed(() => evidenceList.value.filter(canLocate).length)
+/** 新契约有 sectionPath（含文档 id）时走资料结构页；否则保留原 offset 弹窗。 */
+function hasStructureTarget(e: PoolEvidence): e is StructuredPoolEvidence {
+  const structured = e as StructuredPoolEvidence
+  return (
+    !!e.id
+    && Array.isArray(structured.sectionPath)
+    && structured.sectionPath.some((part) => !!part?.trim())
+  )
+}
+
+function canOpenEvidence(e: PoolEvidence): boolean {
+  return hasStructureTarget(e) || canLocate(e)
+}
+
+const openableCount = computed(() => evidenceList.value.filter(canOpenEvidence).length)
 
 // ---------- 证据原文（复用对话页的做法：拉全文 → 定位高亮） ----------
 const docVisible = ref(false)
@@ -565,6 +596,89 @@ async function openDoc(index: number) {
   } catch {
     docFullText.value = ''
   }
+}
+
+// ---------- 证据资料结构（新契约：章节 / 表格行 / 字段精准定位） ----------
+const structureVisible = ref(false)
+const structureLoading = ref(false)
+const structureError = ref('')
+const structureTitle = ref('')
+const structureBlocks = ref<ContentBlock[]>([])
+const structureSectionPath = ref<string[]>([])
+const structureRowKey = ref('')
+const structureHighlightFields = ref<string[]>([])
+const structureAnchorText = ref('')
+let structureRequestSeq = 0
+
+function closeStructure() {
+  structureRequestSeq++
+  structureVisible.value = false
+  structureLoading.value = false
+}
+
+/**
+ * 证据上的 id 是 Java 侧 `Math.abs(kbId.hashCode())`（单向哈希，取不回 UUID），
+ * 而资料结构页要走 Spring 知识库接口，必须用真 id。两边标题完全一致
+ * （Java 同步时传的就是同一个 title），所以按标题换一次，结果缓存。
+ */
+let kbDocsCache: KbDoc[] | null = null
+async function resolveKbDocId(target: StructuredPoolEvidence): Promise<string | null> {
+  const id = target.id || ''
+  if (/^[0-9a-f]{32}$/i.test(id)) return id
+  if (!kbDocsCache) {
+    try {
+      kbDocsCache = await listKbDocs()
+    } catch {
+      kbDocsCache = []
+    }
+  }
+  return kbDocsCache.find((doc) => doc.title === target.title)?.id ?? null
+}
+
+async function openStructure(target: StructuredPoolEvidence, index: number) {
+  const requestSeq = ++structureRequestSeq
+  structureVisible.value = true
+  structureLoading.value = true
+  structureError.value = ''
+  structureTitle.value = target.title
+  structureBlocks.value = []
+  structureSectionPath.value = [...(target.sectionPath || [])]
+  structureRowKey.value = target.rowKey || ''
+  structureHighlightFields.value = [...(target.highlightFields || [])]
+  structureAnchorText.value = target.anchorText || ''
+
+  try {
+    const kbId = await resolveKbDocId(target)
+    if (requestSeq !== structureRequestSeq) return
+    if (!kbId) {
+      // 换不到真 id：退回原来的 offset 弹窗，而不是给用户看失败页
+      structureVisible.value = false
+      structureLoading.value = false
+      void openDoc(index)
+      return
+    }
+    const doc = await getKbDoc(kbId)
+    if (requestSeq !== structureRequestSeq) return
+    structureTitle.value = doc.title || target.title
+    structureBlocks.value = parseContentBlocks(doc.content || '')
+  } catch (error) {
+    if (requestSeq !== structureRequestSeq) return
+    structureError.value = error instanceof Error
+      ? `资料结构加载失败：${error.message}`
+      : '资料结构加载失败，请稍后重试。'
+  } finally {
+    if (requestSeq === structureRequestSeq) structureLoading.value = false
+  }
+}
+
+function openEvidence(index: number) {
+  const target = evidenceList.value[index]
+  if (!target || !canOpenEvidence(target)) return
+  if (hasStructureTarget(target)) {
+    void openStructure(target, index)
+    return
+  }
+  void openDoc(index)
 }
 
 // ============================================================
@@ -878,29 +992,59 @@ function goCommunity() {
               <span v-if="shown" class="answer-badge">{{ INTENT_LABELS[shown.intent] }}</span>
             </div>
 
-            <!-- 依据文献（可折叠；默认收起，避免大段原文喧宾夺主） -->
+            <!-- 证据来源（可折叠；默认收起，避免大段原文喧宾夺主） -->
             <div v-if="evidenceList.length" class="evidence-fold">
-              <button class="evidence-fold-head" type="button" @click="expandedEvidence = !expandedEvidence">
-                <span class="evidence-fold-caret" :class="{ open: expandedEvidence }">▸</span>
-                <span class="evidence-fold-label">依据文献：</span>
-                <span class="evidence-fold-names">
-                  {{ evidenceList.map((e) => `《${e.title}》`).join('、') }}
-                </span>
-              </button>
+              <!-- 整行都是展开/收起的热区：点框里任意空白处都能开。
+                   里面的按钮各自 .stop，避免冒泡上来又切一次（净效果等于没点）。 -->
+              <div class="evidence-fold-head" @click="expandedEvidence = !expandedEvidence">
+                <button
+                  class="evidence-fold-toggle"
+                  type="button"
+                  :aria-expanded="expandedEvidence"
+                  @click.stop="expandedEvidence = !expandedEvidence"
+                >
+                  <span class="evidence-fold-caret" :class="{ open: expandedEvidence }">▸</span>
+                  <span class="evidence-fold-label">证据来源：</span>
+                </button>
+                <div class="evidence-fold-names">
+                  <template v-for="(e, ei) in evidenceList" :key="ei">
+                    <button
+                      v-if="canOpenEvidence(e)"
+                      class="evidence-src evidence-src-inline"
+                      type="button"
+                      :title="hasStructureTarget(e) ? '查看资料结构并定位' : '查看原文并定位'"
+                      :data-evidence-index="ei"
+                      :data-open-mode="hasStructureTarget(e) ? 'structure' : 'legacy'"
+                      @click.stop="openEvidence(ei)"
+                    >《{{ e.title }}》</button>
+                    <span v-else class="evidence-src-text">《{{ e.title }}》</span>
+                    <span v-if="ei < evidenceList.length - 1" class="evidence-name-sep">、</span>
+                  </template>
+                </div>
+              </div>
               <div v-show="expandedEvidence" class="evidence-fold-body">
-                <p v-if="locatableCount" class="evidence-hint">
-                  点击下方任一片段，可查看它在文献原文中的位置
+                <p v-if="openableCount" class="evidence-hint">
+                  点击下方任一片段，可查看它在原始资料中的位置
                 </p>
                 <div v-for="(e, ei) in evidenceList" :key="ei" class="evidence-item">
                   <div class="evidence-src-row">
-                    <button v-if="canLocate(e)" class="evidence-src" type="button" @click="openDoc(ei)">《{{ e.title }}》</button>
+                    <button
+                      v-if="canOpenEvidence(e)"
+                      class="evidence-src"
+                      type="button"
+                      :data-evidence-index="ei"
+                      :data-open-mode="hasStructureTarget(e) ? 'structure' : 'legacy'"
+                      @click="openEvidence(ei)"
+                    >《{{ e.title }}》</button>
                     <span v-else class="evidence-src-text">《{{ e.title }}》</span>
                     <SourceBadge :level="e.sourceLevel" :org="e.sourceOrg" show-org />
                   </div>
                   <div
                     class="evidence-text"
-                    :class="{ locatable: canLocate(e) }"
-                    @click="canLocate(e) && openDoc(ei)"
+                    :class="{ locatable: canOpenEvidence(e) }"
+                    :data-evidence-index="ei"
+                    :data-open-mode="hasStructureTarget(e) ? 'structure' : 'legacy'"
+                    @click="openEvidence(ei)"
                     v-html="evidenceHtml(e)"
                   ></div>
                 </div>
@@ -948,6 +1092,51 @@ function goCommunity() {
           </div>
         </section>
       </main>
+    </div>
+
+    <div
+      v-if="structureVisible && structureLoading"
+      class="structure-loading-overlay"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="`资料结构：${structureTitle}`"
+    >
+      <div class="structure-loading-card">
+        <h2 class="structure-loading-title">《{{ structureTitle }}》</h2>
+        <p class="structure-loading-text">正在读取资料结构…</p>
+        <button class="btn btn-sm btn-outline" type="button" @click="closeStructure">
+          返回检索结果
+        </button>
+      </div>
+    </div>
+
+    <!-- 资料结构：新契约的章节 / 表格行精准定位入口 -->
+    <DocumentStructureView
+      v-else-if="structureVisible && !structureError"
+      :title="structureTitle"
+      :blocks="structureBlocks"
+      :initial-section-path="structureSectionPath"
+      :row-key="structureRowKey"
+      :highlight-fields="structureHighlightFields"
+      :anchor-text="structureAnchorText"
+      back-label="返回检索结果"
+      @close="closeStructure"
+    />
+
+    <div
+      v-else-if="structureVisible && structureError"
+      class="structure-loading-overlay"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="`资料结构：${structureTitle}`"
+    >
+      <div class="structure-loading-card">
+        <h2 class="structure-loading-title">《{{ structureTitle }}》</h2>
+        <p class="structure-loading-text">{{ structureError }}</p>
+        <button class="btn btn-sm btn-outline" type="button" @click="closeStructure">
+          返回检索结果
+        </button>
+      </div>
     </div>
 
     <!-- 证据原文：点片段后打开整份文献并定位高亮 -->
@@ -1214,16 +1403,29 @@ function goCommunity() {
   align-items: center;
   gap: 6px;
   width: 100%;
-  text-align: left;
-  border: 0;
-  background: none;
   padding: 10px 14px;
   font-family: var(--sans);
   font-size: 13px;
   color: var(--ink-2);
   cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s;
 }
-.evidence-fold-head:hover { color: var(--clay-deep); }
+.evidence-fold-head:hover { background: var(--bg-deep); }
+.evidence-fold-toggle {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.evidence-fold-toggle:hover { color: var(--clay-deep); }
 .evidence-fold-caret {
   flex: none;
   font-size: 11px;
@@ -1233,6 +1435,9 @@ function goCommunity() {
 .evidence-fold-caret.open { transform: rotate(90deg); }
 .evidence-fold-label { flex: none; font-weight: 600; color: var(--ink); }
 .evidence-fold-names {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   color: var(--clay-deep);
   font-weight: 600;
   overflow: hidden;
@@ -1258,6 +1463,7 @@ function goCommunity() {
   flex-wrap: wrap;
 }
 .evidence-src {
+  flex: none;
   background: none;
   border: 0;
   padding: 0;
@@ -1268,6 +1474,14 @@ function goCommunity() {
   cursor: pointer;
 }
 .evidence-src:hover { text-decoration: underline; }
+.evidence-src-inline {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.evidence-name-sep {
+  flex: none;
+  color: var(--ink-3);
+}
 .evidence-src-text { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .evidence-text {
   font-size: 13.5px;
@@ -1291,17 +1505,63 @@ function goCommunity() {
 }
 /* 可见的跳转提示：光靠 cursor:pointer 在触屏与截图里都看不出这一块能点 */
 .evidence-text.locatable::after {
-  content: '查看原文 →';
+  content: '查看资料结构 →';
   display: block;
   margin-top: 6px;
   font-size: 12px;
   color: var(--clay-deep);
+}
+.evidence-text.locatable[data-open-mode="legacy"]::after {
+  content: '查看原文 →';
 }
 .evidence-text.locatable:hover {
   /* 用鼠尾草绿，与卡片外壳 hover 的陶土色区分开：
      同一块区域里两个点击目标，靠冷/暖两色让人一眼分清点哪儿会发生什么 */
   background: var(--sage-soft);
   box-shadow: inset 0 0 0 1px var(--sage);
+}
+
+.structure-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(43, 36, 29, 0.52);
+}
+
+.structure-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(520px, 100%);
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.structure-loading-title {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-loading-text {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.8;
 }
 
 /* ---------- 底部操作 ---------- */

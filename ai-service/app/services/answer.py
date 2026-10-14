@@ -509,7 +509,7 @@ async def _llm_revise(question: str, understanding: dict, entries: list[Entry],
         f"意图={understanding.get('intent') or '未指定'}\n\n"
         f"以下是已生成的回答草稿（JSON）：\n{json.dumps(draft, ensure_ascii=False)}\n\n"
         f"当前草稿遗漏了以下证据编号：{missing}，其完整内容为：\n"
-        f"{_evidence_blocks(missing_entries, understanding.get("ethnicity"), question)}\n\n"
+        f"{_evidence_blocks(missing_entries, understanding.get('ethnicity'), question)}\n\n"
         f"用户问题：{question}\n\n"
         "请综合全部证据重新输出完整 JSON 回答：专家核心解答（conclusion）保持综合总结形态；"
         "把遗漏证据的关键数据（患病率、样本量、人群对比结论等）提炼进「依据」分节（sections）或"

@@ -100,7 +100,7 @@ async function submit() {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </span>
-        <span class="brand-name">多民族特色医学智能体</span>
+        <span class="brand-name">多民族特色医学智能问答系统</span>
       </div>
       <h1 class="brand-title">让每一次回答，<br />都有<span class="accent">依据可循</span>。</h1>
       <p class="brand-desc">

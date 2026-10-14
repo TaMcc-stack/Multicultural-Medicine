@@ -87,7 +87,7 @@ onMounted(() => {
               <path d="M12 5v14M5 12h14" />
             </svg>
           </span>
-          <span class="brand-name">多民族特色医学智能体</span>
+          <span class="brand-name">多民族特色医学智能问答系统</span>
           <span class="brand-sub">· 多民族健康与精准用药知识问答</span>
         </div>
 
@@ -173,7 +173,7 @@ onMounted(() => {
         不能替代执业医师的专业判断。若有健康问题，请及时就医。
       </div>
       <div class="foot-meta">
-        <span class="brand">多民族特色医学智能体</span>
+        <span class="brand">多民族特色医学智能问答系统</span>
       </div>
     </footer>
   </div>

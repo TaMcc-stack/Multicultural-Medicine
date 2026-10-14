@@ -1,0 +1,514 @@
+<!doctype html>
+<title>不猜不凑不编不藏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ============================================================
+   讲稿页 · 沿用产品自身的 token（frontend/src/assets/main.css）
+   底色暖纸 #FBF6EF / 主色陶土 #B85A36 / 辅色鼠尾草 #3F6A58
+   ------------------------------------------------------------
+   本页特有的结构：正文分两个语域。
+     · 「讲稿」——要念出来的话，大字号、宽行距
+     · 「备查」——被追问时才需要的事实，等宽字体、鼠尾草绿
+   这个分法来自内容本身：一份演讲台本有人念的部分，也有人查的部分。
+   ============================================================ */
+:root {
+  --bg:        #FBF6EF;
+  --bg-deep:   #F3EADD;
+  --surface:   #FFFFFF;
+  --ink:       #2B241D;
+  --ink-2:     #5C5348;
+  --ink-3:     #8A7F70;
+
+  --clay:      #B85A36;
+  --clay-deep: #9A4628;
+  --clay-soft: #F4E2D6;
+
+  --sage:      #3F6A58;
+  --sage-deep: #305344;
+  --sage-soft: #E4ECE2;
+  --sage-line: #CFE0D5;
+
+  --amber:      #B77E2A;
+  --amber-soft: #F5E9CF;
+  --amber-line: #E9D9B4;
+
+  --line:        #E9DFD1;
+  --line-strong: #D4C4B0;
+
+  /* 收尾块是反色块（深底浅字），浅色主题下强调色要亮 */
+  --closing-accent: #F0A87F;
+
+  --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+
+  --shadow-sm: 0 1px 2px rgba(70, 50, 30, 0.05), 0 4px 14px -8px rgba(70, 50, 30, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #1B1714;
+    --bg-deep:   #221D18;
+    --surface:   #262019;
+    --ink:       #F1E9DD;
+    --ink-2:     #C3B7A6;
+    --ink-3:     #918676;
+
+    --clay:      #E28C60;
+    --clay-deep: #F0A87F;
+    --clay-soft: #3A2A20;
+
+    --sage:      #82B9A0;
+    --sage-deep: #A0CDB7;
+    --sage-soft: #1E2D27;
+    --sage-line: #2F443B;
+
+    --amber:      #D9A64E;
+    --amber-soft: #32281A;
+    --amber-line: #4A3B23;
+
+    --line:        #342B23;
+    --line-strong: #4A3E33;
+
+    /* 深色主题下 --ink 变浅，反色块成了浅底深字，强调色要压深 */
+    --closing-accent: #9A4628;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px -8px rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:        #1B1714;
+  --bg-deep:   #221D18;
+  --surface:   #262019;
+  --ink:       #F1E9DD;
+  --ink-2:     #C3B7A6;
+  --ink-3:     #918676;
+
+  --clay:      #E28C60;
+  --clay-deep: #F0A87F;
+  --clay-soft: #3A2A20;
+
+  --sage:      #82B9A0;
+  --sage-deep: #A0CDB7;
+  --sage-soft: #1E2D27;
+  --sage-line: #2F443B;
+
+  --amber:      #D9A64E;
+  --amber-soft: #32281A;
+  --amber-line: #4A3B23;
+
+  --line:        #342B23;
+  --line-strong: #4A3E33;
+
+  --closing-accent: #9A4628;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px -8px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.75;
+  padding-inline: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 780px; margin-inline: auto; padding-block: 52px 80px; }
+
+/* ---------- 报头 ---------- */
+.masthead { display: grid; gap: 14px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; justify-self: start;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+  color: var(--sage-deep); background: var(--sage-soft);
+  border: 1px solid var(--sage-line); border-radius: 999px; padding: 4px 13px;
+}
+.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sage); }
+h1 {
+  font-size: clamp(30px, 6vw, 44px); font-weight: 900; letter-spacing: 0.02em;
+  line-height: 1.25; margin: 0; text-wrap: balance;
+}
+h1 .sep { color: var(--clay); font-weight: 400; }
+.deck { margin: 0; color: var(--ink-2); font-size: 16.5px; max-width: 62ch; text-wrap: pretty; }
+.deck b { color: var(--ink); font-weight: 700; }
+
+/* ---------- 速览图：四段链路 ---------- */
+.flow {
+  margin-top: 34px; padding: 20px 20px 16px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: var(--shadow-sm);
+}
+.flow-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+}
+.node {
+  font-size: 13px; font-weight: 700; color: var(--ink);
+  background: var(--bg-deep); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 12px; white-space: nowrap;
+}
+.node.q { background: var(--clay-soft); border-color: var(--amber-line); color: var(--clay-deep); }
+.node.a { background: var(--sage-soft); border-color: var(--sage-line); color: var(--sage-deep); }
+.arrow { color: var(--ink-3); font-size: 13px; flex: none; }
+.flow-note {
+  margin-top: 14px; padding-top: 13px; border-top: 1px dashed var(--line-strong);
+  font-size: 13px; color: var(--ink-2); display: flex; gap: 8px; align-items: baseline;
+}
+.flow-note .tag {
+  flex: none; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--sage-deep); background: var(--sage-soft);
+  border: 1px solid var(--sage-line); border-radius: 6px; padding: 1px 8px;
+}
+
+/* ---------- 目录 ---------- */
+.outline { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+.outline a {
+  font-size: 13px; color: var(--ink-2); text-decoration: none;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px;
+  background: var(--surface); transition: border-color 0.16s, color 0.16s;
+}
+.outline a:hover, .outline a:focus-visible { border-color: var(--clay); color: var(--clay-deep); }
+.outline a:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+.outline a i { font-style: normal; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-right: 6px; }
+
+/* ---------- 段落骨架 ---------- */
+main { margin-top: 56px; display: grid; gap: 66px; }
+
+.move { scroll-margin-top: 24px; }
+.move-head {
+  display: flex; gap: 18px; align-items: baseline;
+  padding-bottom: 16px; border-bottom: 2px solid var(--ink);
+}
+.move-num {
+  font-family: var(--mono); font-weight: 600; font-size: 15px;
+  color: var(--clay); letter-spacing: 0.06em; flex: none;
+  padding-top: 4px;
+}
+.move-head h2 { margin: 0; font-size: clamp(24px, 4.4vw, 31px); font-weight: 900; line-height: 1.3; letter-spacing: 0.01em; }
+.move-gist { margin: 6px 0 0; font-size: 14.5px; color: var(--ink-3); }
+
+.script { margin-top: 26px; display: grid; gap: 20px; }
+.script p { margin: 0; font-size: 17.5px; line-height: 1.95; color: var(--ink); text-wrap: pretty; }
+.script strong { font-weight: 700; color: var(--clay-deep); }
+.script em { font-style: normal; font-weight: 700; color: var(--sage-deep); }
+
+/* 一句话记住：本段要落到的那一句 */
+.punch {
+  margin-top: 4px; padding: 16px 20px;
+  background: var(--clay-soft); border-left: 3px solid var(--clay);
+  border-radius: 0 10px 10px 0;
+  font-size: 17px; line-height: 1.8; font-weight: 700; color: var(--clay-deep);
+}
+.punch .lbl {
+  display: block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--clay); margin-bottom: 6px;
+}
+
+/* 讲台提示 */
+.cue {
+  margin-top: 4px; padding: 13px 17px;
+  background: var(--amber-soft); border: 1px dashed var(--amber-line);
+  border-radius: 10px; font-size: 14.5px; line-height: 1.8; color: var(--ink-2);
+}
+.cue .lbl {
+  display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--amber); margin-right: 8px;
+}
+
+/* 备查：被追问时才用的事实 */
+.backing {
+  margin-top: 8px; padding: 15px 18px;
+  background: var(--sage-soft); border: 1px solid var(--sage-line);
+  border-radius: 10px;
+  font-family: var(--mono); font-size: 12.8px; line-height: 1.85; color: var(--sage-deep);
+  overflow-wrap: anywhere;
+}
+.backing .lbl {
+  display: block; font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.1em; margin-bottom: 7px; color: var(--sage);
+}
+.backing code {
+  font-family: inherit; background: var(--bg); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: 4px; padding: 0 5px;
+}
+
+/* ---------- 收尾 ---------- */
+.closing {
+  margin-top: 66px; padding: 30px 26px;
+  background: var(--ink); color: var(--bg); border-radius: 16px;
+}
+.closing h2 { margin: 0 0 14px; font-size: 19px; font-weight: 700; color: var(--bg); letter-spacing: 0.02em; }
+.closing p { margin: 0; font-size: 17.5px; line-height: 1.9; }
+.closing b { color: var(--closing-accent); font-weight: 700; }
+
+footer {
+  margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--ink-3); line-height: 1.9;
+}
+
+@media (max-width: 560px) {
+  .wrap { padding-block: 36px 60px; }
+  .script p { font-size: 16.5px; }
+  .move-head { gap: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">产品发布会 · 技术段</span>
+    <h1>不猜<span class="sep">·</span>不凑<span class="sep">·</span>不编<span class="sep">·</span>不藏</h1>
+    <p class="deck">
+      多民族特色医学智能问答系统 · 技术段演讲稿。<br>
+      讲一件事：<b>用户在输入框里敲下一句话之后，系统里究竟发生了什么。</b>
+    </p>
+  </header>
+
+  <div class="flow" role="img" aria-label="链路示意：提问 → 问题理解 → 证据检索 → 加工生成 → 带编号的回答，证据溯源贯穿全程">
+    <div class="flow-row">
+      <span class="node q">用户提问</span>
+      <span class="arrow">→</span>
+      <span class="node">① 问题理解</span>
+      <span class="arrow">→</span>
+      <span class="node">② 证据检索</span>
+      <span class="arrow">→</span>
+      <span class="node">③ 加工生成</span>
+      <span class="arrow">→</span>
+      <span class="node a">带编号的回答</span>
+    </div>
+    <div class="flow-note">
+      <span class="tag">④ 溯源</span>
+      <span>证据溯源不是第四步，它是贯穿以上全程的一条线——所以放在最后单独讲。</span>
+    </div>
+  </div>
+
+  <nav class="outline">
+    <a href="#m1"><i>01</i>问题理解</a>
+    <a href="#m2"><i>02</i>证据检索</a>
+    <a href="#m3"><i>03</i>加工生成</a>
+    <a href="#m4"><i>04</i>证据溯源</a>
+  </nav>
+
+  <main>
+
+    <!-- ================= 01 ================= -->
+    <section class="move" id="m1">
+      <div class="move-head">
+        <span class="move-num">01</span>
+        <div>
+          <h2>问题理解</h2>
+          <p class="move-gist">先弄明白他在问什么，再决定去哪找</p>
+        </div>
+      </div>
+
+      <div class="script">
+        <p>用户问一句话，系统要做的第一件事不是去搜，是<strong>先弄明白他在问什么</strong>。</p>
+
+        <p>我们要从这句话里抽出三样东西：<em>问的是哪个民族、哪种疾病、想问哪个方面</em>。比如「白族得糖尿病的人多不多」——民族是白族，疾病是糖尿病，想问的方面是患病率。</p>
+
+        <p>为什么非得先抽出来？因为我们的知识库是按「民族 × 疾病 × 方面」这三个维度组织起来的。不先定位到那个格子，后面的检索就是在整个库里乱翻。</p>
+
+        <p>这一步我们做了三层。</p>
+
+        <p><strong>第一层是词典。</strong>我们维护了一张词表，里面收了 31 个民族、7 类疾病、5 类意图，还有一批边界词——像「确诊」「开药」这种一看就超出科普范围的词。查询的时候按<b>最长匹配</b>去撞：「维吾尔族」必须整个撞出来，不能被「维吾尔」截断成半个词。这一层不花钱、不联网、毫秒出结果，能解决的就不往下走。</p>
+
+        <p><strong>第二层是大模型。</strong>规则撞不到的，交给模型去抽。但这里有个约束：我们把温度设成 0，强制它输出结构化结果，并且<b>它的答案只能从我们给的候选词表里挑</b>。不让它自由发挥——因为它一旦造出一个我们知识库里根本不存在的民族名，后面整条链路都会扑空。</p>
+
+        <p><strong>第三层是继承。</strong>上面两层都没抽出来，就回头看前几轮对话。用户先问「白族糖尿病」，接着追问「那高血压呢」——这一句里没有民族，我们就从历史里把「白族」继承下来。这样一个多轮对话不会每一轮都要求用户把话说全。</p>
+
+        <div class="punch">
+          <span class="lbl">这一段要落到的两句</span>
+          第一句：<b>宁可多问一句，不要猜错了答。</b>用户问「糖尿病要注意什么」，没说民族——我们不会随便挑一个民族答他，而是回一句「您想了解哪个民族的情况」。<br>
+          第二句：<b>门槛在检索之前。</b>这一问只要踩到诊断、治疗、处方，链路到这儿就停了，不往下走检索，也不会去生成。
+        </div>
+
+        <div class="cue">
+          <span class="lbl">讲台提示</span>讲「三层」的时候节奏要快，一层一句话带过就行；听众记住的是最后那两句，中间的技术细节留给追问。
+        </div>
+      </div>
+
+      <aside class="backing">
+        <span class="lbl">备查</span>
+        <code>understanding.py</code> · <code>_FALLBACK</code> 词典：31 个民族 / 7 类疾病 / 5 条意图规则<br>
+        最长匹配：<code>rule_understand()</code>，按词长倒序取第一个命中<br>
+        LLM 层：<code>temperature=0.0</code>、JSON 模式、<code>max_tokens=260</code>，只填空缺（<code>if result.get(k) is None and parsed.get(k)</code>）<br>
+        继承层：<code>_inherit_from_history()</code>，回看 3 轮<br>
+        边界拦截：<code>_MEDICAL_ADVICE_PATTERNS</code> 三十条正则，命中即返回固定话术，不进入检索<br>
+        泛问：「各民族」这类不指定民族的问题走 <code>ETHNICITY_GENERAL</code> 哨兵值
+      </aside>
+    </section>
+
+    <!-- ================= 02 ================= -->
+    <section class="move" id="m2">
+      <div class="move-head">
+        <span class="move-num">02</span>
+        <div>
+          <h2>证据检索</h2>
+          <p class="move-gist">去找证据，找不到就说找不到</p>
+        </div>
+      </div>
+
+      <div class="script">
+        <p>知道他在问什么之后，第二件事是<strong>去找证据</strong>。</p>
+
+        <p>我们不是在「一个库」里搜，是<b>两趟搜</b>。</p>
+
+        <p><em>第一趟</em>进「整合资料库」——这是我们自己整理过、结构化过的资料。这一趟有命中，就用这一趟，不再往下走。</p>
+
+        <p><em>第二趟</em>才降级进「原始文献库」——直接上传的原文，没经过整理。</p>
+
+        <p>这里有一个关键判断，是我们中途改过的地方：<strong>什么叫「命中」？</strong></p>
+
+        <p>不是「检索器返回了候选」就叫命中。检索器几乎总会返回点什么——它按分数排序，总能给你前十条。真正的判据是：<b>过了意图的硬门槛之后，还有没有剩</b>。用户问的是患病率，检索回来的十条全在讲发病机制——那不算命中，该降级就降级，不能拿这批货去糊弄模型。</p>
+
+        <p>每一趟内部用的是混合检索，两路分数加权融合：一路是关键词打分，一路是向量相似度。融合之后再叠一层槽位加权——<em>民族对上了加分，疾病对上了加分，意图对上了加得最多</em>，因为意图才是用户真正想知道的那个方面。</p>
+
+        <p>还有两处细节值得单独说。</p>
+
+        <p>一是<strong>查询扩展</strong>。用户的问法是大白话，文献里写的是书面语。我们会让模型把这个问题改写成几个等价的书面问法，分别去检索。<b>每个问法单独算分，最后取最高分</b>——而不是把它们拼成一个长查询。拼起来会把噪音也搅进同一个查询里，反而把真正相关的那条压下去。</p>
+
+        <p>二是<strong>表格数据直通</strong>。如果证据是表格里的数值——比如某民族某病的患病率——它不走相似度排序，直接置顶。因为表格里的数字和问题的字面重合度往往很低，靠相似度它会被淹掉；但它恰恰是用户最想要的那一条。</p>
+
+        <div class="punch">
+          <span class="lbl">这一段要落到的一句</span>
+          <b>「答不上」是一个结论，不是一次失败。</b>两趟都没找到够格的证据，我们就直说目前文献没有覆盖这一块，并建议去医院问医生——而不是矮子里拔将军，硬凑几条塞给模型。
+        </div>
+      </div>
+
+      <aside class="backing">
+        <span class="lbl">备查</span>
+        <code>kb.py</code> · <code>retrieve()</code>：<code>score = 0.55 × bm25_norm + 0.45 × cos_norm</code><br>
+        槽位加权：民族命中 <code>+0.15</code>、疾病命中 <code>+0.15</code>、意图命中 <code>+0.30</code><br>
+        BM25 自己实现，<code>k1=1.5, b=0.75</code>；向量这一路是余弦相似度<br>
+        疾病硬过滤用整词 + 2-gram，<b>不</b>用分词——因为 <code>tokenize("糖尿病")</code> 只剩一个「病」字，会命中几乎所有医学文本<br>
+        表格 KV 置顶：<code>_numeric_kv_entries()</code> 的结果直接拼在候选最前面<br>
+        两趟：<code>main.py:_retrieve_tiered()</code>，先 <code>PARTITION_INTEGRATED</code> 后 <code>PARTITION_RAW</code><br>
+        命中判据写在函数注释里：「『命中』的判据是<b>过了意图硬门槛之后还有剩</b>」
+      </aside>
+    </section>
+
+    <!-- ================= 03 ================= -->
+    <section class="move" id="m3">
+      <div class="move-head">
+        <span class="move-num">03</span>
+        <div>
+          <h2>加工生成</h2>
+          <p class="move-gist">让模型只许用我们给的证据说话，说完还要过检</p>
+        </div>
+      </div>
+
+      <div class="script">
+        <p>证据找齐了，第三件事才是让模型写答案。</p>
+
+        <p>这一步我们的原则只有一条：<strong>模型只许用我们给它的证据说话。</strong></p>
+
+        <p>我们把证据一条条编号、标好来源，塞进提示词，然后明确要求：不得引入证据之外的任何信息。</p>
+
+        <p>但光靠提示词写「不要编造」是不够的——那是<em>拜托</em>模型，不是<em>保证</em>。所以生成之后还有一道质检。质检做三件事。</p>
+
+        <p><strong>第一，查跑题。</strong>答案里如果冒出一个问题里没问、证据里也没有的疾病，退回重写；答案里如果出现了百分比，这个百分比必须在证据里找得到出处。</p>
+
+        <p><strong>第二，查引用覆盖。</strong>我们数答案里出现了哪些编号。如果有证据从头到尾一次都没被引用到——说明模型把它漏了——就让模型补进去；模型补不动，程序直接补。</p>
+
+        <p><strong>第三，查表格。</strong>用户问的是对比类问题，答案里就该有一张对比表，不能退化成一段散文。</p>
+
+        <p>还有一条红线要单独说：<strong>用药。</strong>就算证据原文里明明白白写着某个药名、某个剂量，我们也不输出。这一条在提示词里是写死的。这是<b>我们主动放弃的能力</b>——不是做不到，是不做。</p>
+
+        <div class="punch">
+          <span class="lbl">这一段要落到的一句</span>
+          <b>「不编造」不是靠提示词拜托模型，是生成之后真的有人把关。</b>
+        </div>
+
+        <div class="cue">
+          <span class="lbl">讲台提示</span>「三条质检 + 一条红线」可以说得慢一点，这是听众最容易记住、也最能体现工程量的地方。红线那句说完停一秒。
+        </div>
+      </div>
+
+      <aside class="backing">
+        <span class="lbl">备查</span>
+        <code>answer.py</code> · 系统提示词第一句就写明受众是「面向缺乏专业医学常识、但对本民族健康高度关注的普通群众」<br>
+        证据编号：<code>_evidence_blocks()</code> 输出 <code>[1] [2] [3]</code>，并附来源类型、机构、文档名、页码、章节<br>
+        三查：<code>ensure_on_topic()</code> / <code>ensure_citation_coverage()</code> / <code>_ensure_comparison_table()</code><br>
+        证据有预算：<code>_EVIDENCE_MAX_CHARS = 2000</code>，超了用问题里的二字片段挑最相关的窗口留下<br>
+        来源分级决定措辞：官方权威资料直接陈述；网页抓取说「据公开报道显示」；用户上传说「据用户上传的资料显示」<br>
+        边界拒答走 <code>_safety_answer()</code>，返回固定话术且<b>不附任何证据</b>，标记 <code>engine: "safety-boundary"</code>
+      </aside>
+    </section>
+
+    <!-- ================= 04 ================= -->
+    <section class="move" id="m4">
+      <div class="move-head">
+        <span class="move-num">04</span>
+        <div>
+          <h2>证据溯源</h2>
+          <p class="move-gist">让用户有资格不信</p>
+        </div>
+      </div>
+
+      <div class="script">
+        <p>最后一部分，我想单独讲讲溯源。</p>
+
+        <p>前面三个环节讲完了，但如果用户看不到这三步是怎么走的，那这套系统对他来说就还是一个黑盒子——他只能选择信，或者不信。</p>
+
+        <p>溯源要解决的正是这件事：<strong>让用户有资格不信。</strong></p>
+
+        <p>技术上，它分四层。</p>
+
+        <p><strong>第一层，证据在入库的时候就带着身份。</strong>每一条证据进库的时候，除了内容本身，还记了它来自哪份文档、第几页、哪一节，来源类型是什么、来源机构是谁。所以模型在生成的时候，看到的不是一段裸文字，而是「这一条是官方权威资料，来源机构是某某」——<em>它知道哪句话可以以什么口吻说出去</em>。前面说的措辞分级，依据就在这里。</p>
+
+        <p><strong>第二层，证据在提示词里是有编号的。</strong>编号 <code>[1] [2] [3]</code>，模型写答案的时候必须带上。生成完我们再回头数一遍：有没有编号对不上的，有没有哪条证据一次都没被引用。编号就是答案和证据之间那根线。</p>
+
+        <p><strong>第三层，也是最直观的一层：一个编号可以点回到原文的那一句话。</strong>每条证据除了内容，还带着它在原文里的<b>字符位置</b>——从第几个字到第几个字。用户点「查看原文」，界面把整篇文档渲染出来，按这个位置把那一句高亮，然后自动滚过去。万一位置对不上——文档更新过、版本不一致——还有一层兜底：拿证据内容的前 20 个字去原文里找，找到哪儿高亮哪儿。整合资料库的文档高亮的是正文段落；原始文献是 PDF 的，直接翻到对应那一页。</p>
+
+        <p><strong>第四层，是我们花了最多力气去保证的一层：界面上显示的那批证据，和真正拿来生成答案的那批证据，是同一批。</strong></p>
+
+        <p>这件事听起来理所当然，但它是会出错的。如果检索跑两遍——一遍给界面看，一遍给模型用——就会出现「界面上显示的是整合资料，回答却是拿原文生成的」。用户的核对就失去了意义。我们的做法是让这两处<b>共用同一段检索代码</b>，从源头上不存在两批证据。</p>
+
+        <p>四层合起来，用户拿到一个回答之后，他可以：看这个回答引了哪几条证据、每条来自哪份文档的哪一页、点开看到原文里被高亮的那一句。</p>
+
+        <div class="punch">
+          <span class="lbl">这一段要落到的一句</span>
+          <b>一个医学类的 AI 回答，可信度不该建立在你相信它上，该建立在你能查它上。</b>他要是不信，他有地方去查。
+        </div>
+      </div>
+
+      <aside class="backing">
+        <span class="lbl">备查</span>
+        第一层 · <code>Entry</code> 字段：<code>source_level</code> / <code>source_org</code> / <code>source_url</code> / <code>page_no</code> / <code>section</code> / <code>doc_title</code>；渲染成 <code>【来源类型：X | 来源机构：Y】</code>（<code>_source_tag()</code>）<br>
+        第二层 · <code>ensure_citation_coverage()</code> 数答案里的 <code>[n]</code>，未引用的证据先让模型改写补入，改写不成程序兜底追加<br>
+        第三层 · 证据对象带 <code>startOffset</code> / <code>endOffset</code> 字符偏移；<code>DocEvidenceViewer.vue</code> 把全文切成三段、中间那段包进高亮 span，再 <code>scrollIntoView</code>；<code>findOffset()</code> 用 20 字前缀兜底<br>
+        第四层 · <code>main.py:_retrieve_tiered()</code> 同时被证据池接口和生成接口调用。源码注释原话：<br>
+        <span style="opacity:.85">「两趟都收在这里、并由<b>证据池与生成共用</b>：它们必须拿到同一批证据，否则会出现『界面显示的是整合资料、回答却拿原文生成』」</span><br>
+        证据充分度另有三级对外标记：<code>sufficient</code> / <code>partial</code> / <code>none</code>
+      </aside>
+    </section>
+
+  </main>
+
+  <div class="closing">
+    <h2>收尾</h2>
+    <p>
+      四段链路，其实就四句话：<br>
+      问题理解是<b>不猜</b>，证据检索是<b>不凑</b>，加工生成是<b>不编</b>，证据溯源是<b>不藏</b>。<br>
+      谢谢大家。
+    </p>
+  </div>
+
+  <footer>
+    讲稿中的技术事实均来自当前代码：<code>ai-service/app/services/understanding.py</code>（问题理解）、
+    <code>ai-service/app/services/kb.py</code>（证据检索）、<code>ai-service/app/services/answer.py</code>（加工生成）、
+    <code>ai-service/app/main.py</code>（链路编排与证据池）、<code>frontend/src/components/DocEvidenceViewer.vue</code>（原文高亮）。
+  </footer>
+
+</div>
